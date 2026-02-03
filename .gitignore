@@ -1,4 +1,13 @@
+*
+
+!*/
 /build
-/docs
-*.txt
+
+!*.c
+!*.cpp
+!*.h
+!*.hpp
 !CMakeLists.txt
+!*.cmake
+!*.sh
+!*.md

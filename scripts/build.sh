@@ -14,6 +14,6 @@ cmake --build "$BUILD_DIR" -j$(nproc)
 
 #run tests
 cd $BUILD_DIR 
-ctest
+ctest -v
 
 
