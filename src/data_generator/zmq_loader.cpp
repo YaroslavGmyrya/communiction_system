@@ -7,7 +7,13 @@ int main() {
 
   sock.connect("tcp://127.0.0.1:5000");
 
-  std::string payload(1024, 'A');
+  std::string payload =
+      ("First, I wake up. Then, I get dressed. I walk to school. I do not ride "
+       "a bike. I do not ride the bus. I like to go to school. It rains. I do "
+       "not like rain. I eat lunch. I eat a sandwich and an apple. I play "
+       "outside. I like to play. I read a book. I like to read books. I walk "
+       "home. I do not like walking home. My mother cooks soup for dinner. The "
+       "soup is hot. Then, I go to bed. I do not like to go to bed.");
 
   while (true) {
     zmqpp::message msg;

@@ -5,44 +5,177 @@
 #include <string>
 #include <vector>
 
+#include "../include/ImGUI_interface.hpp"
+
 using sample = std::complex<double>;
 
 /**
- * @file coder.cpp
- * @brief Translate string to bits (only ascii)
+ * @brief Convert ASCII string to bit sequence.
  *
- * @param[in] str ascii string
- * @return Bit sequence
- **/
+ * @param[in] str Input ASCII string.
+ * @return Vector of bits. Returns empty vector on error.
+ */
 std::vector<uint8_t> coder(const std::string &str);
 
 /**
- * @file conv_coding.cpp
- * @brief Add extra bits to improve noise immunity
+ * @brief Convert convolutional polynomials to tap positions.
  *
- * @param[in] bits bits after coder
- * @param[in] poly polynoms
- * @return New bit sequence with extra bits
- **/
+ * @param[in] poly Generator polynomials.
+ * @return Tap positions for each polynomial.
+ */
+std::vector<std::vector<int>> poly2pos(const std::vector<int> &poly);
+
+/**
+ * @brief Perform convolutional encoding.
+ *
+ * @param[in] bits Input bit sequence.
+ * @param[in] poly Generator polynomials.
+ * @return Encoded bit sequence. Returns empty vector on error.
+ */
 std::vector<uint8_t> conv_coder(const std::vector<uint8_t> &bits,
-                                const std::vector<int> poly);
+                                const std::vector<int> &poly);
 
 /**
- * @file intervaling.cpp
- * @brief Intervale bits
+ * @brief Generate shuffled index order.
  *
- * @param[in] bits bits after convolve coder
- * @param[in] seed seed for determanating
- * @return New bits sequence with new order
- **/
-std::vector<uint8_t> intervale(const std::vector<uint8_t> &bits,
-                               const int seed);
+ * @param[in] N Number of elements.
+ * @param[in] seed Random seed.
+ * @return Permutation of indices.
+ */
+std::vector<int> order_gen(int N, int seed);
 
 /**
- * @file modulation.cpp
- * @brief Translate bits to QPSK symbols
+ * @brief Shuffle bits using generated permutation.
  *
- * @param[in] bits bits after shuffuling
- * @return QPSK symbols
- **/
-std::vector<sample> QPSK_modulation(std::vector<uint8_t> &bits);
+ * @param[in] bits Input bit sequence.
+ * @param[in] seed Random seed.
+ * @return Shuffled bit sequence. Returns empty vector on error.
+ */
+std::vector<uint8_t> shuffuling(const std::vector<uint8_t> &bits,
+                                const int &seed);
+
+/**
+ * @brief Modulate bits using BPSK.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex BPSK symbols. Returns empty vector on error.
+ */
+std::vector<sample> BPSK(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits using QPSK.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex QPSK symbols. Returns empty vector on error.
+ */
+std::vector<sample> QPSK(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits using 16-QAM.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex 16-QAM symbols. Returns empty vector on error.
+ */
+std::vector<sample> QAM16(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits using 64-QAM.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex 64-QAM symbols. Returns empty vector on error.
+ */
+std::vector<sample> QAM64(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits using 256-QAM.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex 256-QAM symbols. Returns empty vector on error.
+ */
+std::vector<sample> QAM256(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits using 1024-QAM.
+ *
+ * @param[in] bits Input bit sequence.
+ * @return Vector of complex 1024-QAM symbols. Returns empty vector on error.
+ */
+std::vector<sample> QAM1024(const std::vector<uint8_t> &bits);
+
+/**
+ * @brief Modulate bits with selected modulation order.
+ *
+ * Supported orders:
+ * 2 -> BPSK
+ * 4 -> QPSK
+ * 16 -> 16-QAM
+ * 64 -> 64-QAM
+ * 256 -> 256-QAM
+ * 1024 -> 1024-QAM
+ *
+ * @param[in] bits Input bit sequence.
+ * @param[in] order Modulation order.
+ * @return Vector of complex symbols. Returns empty vector on error.
+ */
+std::vector<sample> modulation(const std::vector<uint8_t> &bits,
+                               const int &order);
+
+void batch_ifft(std::vector<std::complex<double>> &data,
+                std::vector<std::complex<double>> &ifft_out, const int FFT_size,
+                const int CP_size);
+
+std::vector<double>
+OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
+                    int FFT_size, int CP_size);
+
+void batch_fft(std::vector<std::complex<double>> &data,
+               std::vector<std::complex<double>> &fft_out, int FFT_size);
+
+std::vector<std::complex<double>>
+extract_OFDM_symbols(const std::vector<std::complex<double>> &samples,
+                     const std::vector<int> &peaks, int CP_size, int FFT_size);
+
+void CFO_correction(std::vector<std::complex<double>> &samples,
+                    const std::vector<int> &peaks,
+                    const std::vector<double> &correlation, int CP_size,
+                    int FFT_size);
+
+std::vector<std::complex<double>>
+add_CP(const std::vector<std::complex<double>> &samples, int FFT_size,
+       int CP_size);
+
+std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
+                                        int gi_size);
+
+std::vector<std::complex<double>>
+create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
+                   const std::vector<cell_type> &grid,
+                   std::complex<double> pilot_value, int buff_size);
+
+std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid);
+
+void linear_interpolation(std::vector<std::complex<double>> &H,
+                          const std::vector<int> &pos, int FFT_size);
+
+void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
+                           int FFT_size);
+
+void unwrap_phase(std::vector<double> &phase, int FFT_size);
+
+std::vector<std::complex<double>>
+channel_estimation(std::vector<std::complex<double>> &signal,
+                   const std::vector<cell_type> &grid,
+                   std::complex<double> pilot_value, rx_cfg &rx_config);
+
+void channel_equalization(std::vector<std::complex<double>> &symbols,
+                          const std::vector<std::complex<double>> &estimation);
+
+std::vector<std::complex<double>>
+extract_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
+                const std::vector<cell_type> &grid);
+/**
+ * @brief Run TX processing chain and update shared TX configuration.
+ *
+ * @param[in,out] config Shared TX configuration.
+ */
+void tx_run(tx_cfg &config);

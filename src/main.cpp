@@ -6,91 +6,49 @@
 #include <iostream>
 #include <thread>
 
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_sdl2.h"
-#include "imgui.h"
-#include "implot.h"
+#include "../include/ImGUI_interface.hpp"
+#include "../include/tx_lib.hpp"
 
 int main(int argc, char *argv[]) {
 
-  // int kbps = 1;
+  /*init TX config*/
+  tx_cfg tx_config;
+  tx_config.run = true;
+  tx_config.sps = 10;
+  tx_config.mod_order = 2;
+  // tx_config.bitrate = static_cast<int>(sdr_config.tx_sample_rate /
+  //                                      tx_config.sps * tx_config.mod_order);
+  tx_config.IR_type = 0;
+  // tx_config.tx_samples.resize(sdr_config.buff_size);
+  tx_config.OFDM = 1;
+  tx_config.FFT_size = 16;
+  tx_config.CP_size = 4;
+  tx_config.count_OFDM_symb = 10;
+  tx_config.count_bits = 1000;
+  tx_config.pilot = {1, 1};
+  tx_config.pilots_count = 4;
+  tx_config.guard_size = 2;
 
-  // std::thread server()
+  /*init RX config*/
+  rx_cfg rx_config;
+  rx_config.run = true;
+  rx_config.costas_BnTs = 0.5;
+  rx_config.costas_Kp = 1;
+  rx_config.gardner_BnTs = 0.5;
+  rx_config.gardner_Kp = 1;
+  rx_config.IR_type = 1;
+  rx_config.mod_order = 2;
+  rx_config.sps = 10;
+  // rx_config.rx_samples.resize(sdr_config.buff_size);
+  rx_config.OFDM = 0;
+  rx_config.Nc = 16;
+  rx_config.CP_size = 4;
 
-  // // 1) Инициализация SDL
-  // SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-  // SDL_Window *window = SDL_CreateWindow(
-  //     "Backend start", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-  //     1024, 768, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-  // SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+  std::thread gui_thread(run_gui, std::ref(tx_config), std::ref(rx_config));
+  std::thread tx_thread(tx_run, std::ref(tx_config));
 
-  // // 2) Инициализация контекста Dear Imgui
-  // ImGui::CreateContext();
-  // ImPlot::CreateContext();
-
-  // // Ввод\вывод
-  // ImGuiIO &io = ImGui::GetIO();
-  // (void)io;
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Включить Keyboard
-  // Controls io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Включить
-  // Gamepad Controls io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     //
-  // Включить Docking
-
-  // // 2.1) Привязка Imgui к SDL2 и OpenGl backend'ам
-  // ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-  // ImGui_ImplOpenGL3_Init("#version 330");
-
-  // // 3) Игра началась
-  // bool running = true;
-  // while (running)
-  // {
-
-  //     // 3.0) Обработка event'ов (inputs, window resize, mouse moving, etc.);
-  //     SDL_Event event;
-  //     while (SDL_PollEvent(&event))
-  //     {
-  //         std::cout << "Processing some event: " << event.type << std::endl;
-  //         ImGui_ImplSDL2_ProcessEvent(&event);
-  //         if (event.type == SDL_QUIT)
-  //         {
-  //             running = false;
-  //         }
-  //     }
-
-  //     // 3.1) Начинаем создавать новый фрейм;
-  //     ImGui_ImplOpenGL3_NewFrame();
-  //     ImGui_ImplSDL2_NewFrame();
-  //     ImGui::NewFrame();
-  //     ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_None);
-
-  //     // 3.2) Наш виджет с кнопкой;
-  //     {
-  //         static int counter = 0;
-  //         ImGui::Begin("Hello, world!");
-  //         ImGui::Text("This is some useful text.");
-  //         if (ImGui::Button("Button"))
-  //             counter++;
-  //         ImGui::Text("counter = %d", counter);
-  //         ImGui::End();
-  //     }
-
-  //     // 3.3) Отправляем на рендер;
-  //     ImGui::Render();
-  //     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-  //     glClear(GL_COLOR_BUFFER_BIT);
-  //     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-  //     SDL_GL_SwapWindow(window);
-  // }
-
-  // // 4) Закрываем приложение безопасно.
-  // ImGui_ImplOpenGL3_Shutdown();
-  // ImGui_ImplSDL2_Shutdown();
-  // ImPlot::DestroyContext();
-  // ImGui::DestroyContext();
-  // SDL_GL_DeleteContext(gl_context);
-  // SDL_DestroyWindow(window);
-  // SDL_Quit();
+  gui_thread.join();
+  tx_thread.join();
 
   return 0;
 }
