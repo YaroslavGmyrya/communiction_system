@@ -81,7 +81,15 @@ add_library(CORE SHARED
     src/tx_lib/modulator.cpp
     src/tx_lib/preparing_bits.cpp
     src/tx_lib/tx_run.cpp
-    src/tx_lib/OFDM.cpp
+    src/tx_lib/OFDM_tx.cpp
+
+    src/rx_lib/decoder.cpp
+    src/rx_lib/deintervaler.cpp
+    src/rx_lib/demodulator.cpp
+    src/rx_lib/find_peaks.cpp
+    src/rx_lib/OFDM_rx.cpp
+    src/rx_lib/rx_run.cpp
+
     visualization/ImGUI_interface.cpp
 )
 

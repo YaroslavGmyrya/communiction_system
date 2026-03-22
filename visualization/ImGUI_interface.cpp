@@ -208,7 +208,7 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config) {
 
             if (rx_config.OFDM) {
               ImGui::SeparatorText("OFDM");
-              ImGui::InputInt("Subcarriers count", &rx_config.Nc, 1, 128);
+              ImGui::InputInt("Subcarriers count", &rx_config.FFT_size, 1, 128);
               ImGui::InputInt("Cycle prefix size", &rx_config.CP_size, 1, 128);
             }
 

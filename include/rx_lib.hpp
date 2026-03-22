@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "ImGUI_interface.hpp"
+
 using sample = std::complex<double>;
 
 /**
@@ -35,3 +37,47 @@ std::vector<uint8_t> deintervale(const std::vector<uint8_t> &bits,
  * @return Bits
  **/
 std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &samples);
+
+std::vector<double>
+OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
+                    int FFT_size, int CP_size);
+
+void batch_fft(std::vector<std::complex<double>> &data,
+               std::vector<std::complex<double>> &fft_out, int FFT_size);
+
+std::vector<std::complex<double>>
+delete_CP(const std::vector<std::complex<double>> &samples,
+          const std::vector<int> &peaks, const int CP_size, const int FFT_size);
+
+void CFO_correction(std::vector<std::complex<double>> &samples,
+                    const std::vector<int> &peaks,
+                    const std::vector<double> &correlation, int CP_size,
+                    int FFT_size);
+
+std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
+                                        int gi_size);
+
+std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid);
+
+void linear_interpolation(std::vector<std::complex<double>> &H,
+                          const std::vector<int> &pos, int FFT_size);
+
+void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
+                           int FFT_size);
+
+void unwrap_phase(std::vector<double> &phase, int FFT_size);
+
+std::vector<std::complex<double>>
+channel_estimation(std::vector<std::complex<double>> &signal,
+                   const std::vector<cell_type> &grid,
+                   std::complex<double> pilot_value);
+
+void channel_equalization(std::vector<std::complex<double>> &symbols,
+                          const std::vector<std::complex<double>> &estimation);
+
+std::vector<std::complex<double>>
+extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
+                      const std::vector<cell_type> &grid);
+
+void rx_run(rx_cfg &config,
+            const std::vector<std::complex<double>> &rx_samples);

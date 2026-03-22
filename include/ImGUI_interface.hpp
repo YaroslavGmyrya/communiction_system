@@ -50,7 +50,7 @@ struct rx_cfg {
   int sps;       // samples per symbol
   int IR_type;   // 0-Rectangle, 1-Raised-Cosine
   int OFDM;      // 0 - OFDM 0FF, 1 - OFDM ON
-  int Nc;        // subcarriers count
+  int FFT_size;  // subcarriers count
   int CP_size;   // Cyclic prefix size
   int count_OFDM_symb;
 
@@ -61,6 +61,10 @@ struct rx_cfg {
   // costas params
   double costas_Kp;
   double costas_BnTs;
+
+  int pilots_count;
+  int guard_size;
+  std::complex<double> pilot_value;
 
   // buffers
   std::vector<std::complex<int16_t>> rx_samples;
@@ -76,6 +80,12 @@ struct rx_cfg {
   std::pair<std::vector<std::complex<double>>, std::vector<double>>
       post_fine_CFO_spectrum;
   std::vector<std::complex<double>> post_costas;
+
+  std::vector<int> peaks;
+  std::vector<std::complex<double>> ofdm_symbols;
+  std::vector<std::complex<double>> freq_domain;
+  std::vector<std::complex<double>> estimation;
+  std::vector<cell_type> grid;
 };
 
 void run_gui(tx_cfg &tx_config, rx_cfg &rx_config);

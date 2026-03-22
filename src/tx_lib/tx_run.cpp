@@ -1,7 +1,10 @@
+#include <iostream>
+
+#include <chrono>
+#include <thread>
+
 #include "../../include/ImGUI_interface.hpp"
 #include "../../include/tx_lib.hpp"
-
-#include <iostream>
 
 void tx_run(tx_cfg &config) {
   // std::string message("My family lives in a small house. It’s simple but
@@ -22,10 +25,9 @@ void tx_run(tx_cfg &config) {
   /*message (word) -> bits*/
   config.bits = coder(message);
 
-  /*create ofdm grid*/
+  seed = rand();
 
   while (config.run) {
-    seed = rand();
 
     /*convolve coding*/
     config.post_conv_coding = conv_coder(config.bits, polynomes);
@@ -34,7 +36,7 @@ void tx_run(tx_cfg &config) {
     config.post_shuffuling = shuffuling(config.bits, seed);
 
     /*bits -> M-PSK/QAM symbols*/
-    config.symbols = modulation(config.bits, config.mod_order);
+    config.symbols = modulation(config.post_shuffuling, config.mod_order);
 
     /*generate ofdm grid*/
     config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count,
@@ -51,5 +53,10 @@ void tx_run(tx_cfg &config) {
     /*frequency domain -> time domain*/
     batch_ifft(config.ofdm_symbols_cp, config.ofdm_signal, config.FFT_size,
                config.CP_size);
+
+    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 10, 0);
+    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.end(), 10, 0);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   }
 }

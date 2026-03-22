@@ -120,30 +120,6 @@ std::vector<sample> QAM1024(const std::vector<uint8_t> &bits);
 std::vector<sample> modulation(const std::vector<uint8_t> &bits,
                                const int &order);
 
-void batch_ifft(std::vector<std::complex<double>> &data,
-                std::vector<std::complex<double>> &ifft_out, const int FFT_size,
-                const int CP_size);
-
-std::vector<double>
-OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-                    int FFT_size, int CP_size);
-
-void batch_fft(std::vector<std::complex<double>> &data,
-               std::vector<std::complex<double>> &fft_out, int FFT_size);
-
-std::vector<std::complex<double>>
-extract_OFDM_symbols(const std::vector<std::complex<double>> &samples,
-                     const std::vector<int> &peaks, int CP_size, int FFT_size);
-
-void CFO_correction(std::vector<std::complex<double>> &samples,
-                    const std::vector<int> &peaks,
-                    const std::vector<double> &correlation, int CP_size,
-                    int FFT_size);
-
-std::vector<std::complex<double>>
-add_CP(const std::vector<std::complex<double>> &samples, int FFT_size,
-       int CP_size);
-
 std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
                                         int gi_size);
 
@@ -152,27 +128,14 @@ create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
                    const std::vector<cell_type> &grid,
                    std::complex<double> pilot_value, int buff_size);
 
-std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid);
-
-void linear_interpolation(std::vector<std::complex<double>> &H,
-                          const std::vector<int> &pos, int FFT_size);
-
-void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
-                           int FFT_size);
-
-void unwrap_phase(std::vector<double> &phase, int FFT_size);
-
 std::vector<std::complex<double>>
-channel_estimation(std::vector<std::complex<double>> &signal,
-                   const std::vector<cell_type> &grid,
-                   std::complex<double> pilot_value, rx_cfg &rx_config);
+add_CP(const std::vector<std::complex<double>> &samples, int FFT_size,
+       int CP_size);
 
-void channel_equalization(std::vector<std::complex<double>> &symbols,
-                          const std::vector<std::complex<double>> &estimation);
+void batch_ifft(std::vector<std::complex<double>> &data,
+                std::vector<std::complex<double>> &ifft_out, const int FFT_size,
+                const int CP_size);
 
-std::vector<std::complex<double>>
-extract_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
-                const std::vector<cell_type> &grid);
 /**
  * @brief Run TX processing chain and update shared TX configuration.
  *

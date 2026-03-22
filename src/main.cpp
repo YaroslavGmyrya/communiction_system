@@ -7,6 +7,7 @@
 #include <thread>
 
 #include "../include/ImGUI_interface.hpp"
+#include "../include/rx_lib.hpp"
 #include "../include/tx_lib.hpp"
 
 int main(int argc, char *argv[]) {
@@ -41,11 +42,16 @@ int main(int argc, char *argv[]) {
   rx_config.sps = 10;
   // rx_config.rx_samples.resize(sdr_config.buff_size);
   rx_config.OFDM = 0;
-  rx_config.Nc = 16;
+  rx_config.FFT_size = 16;
   rx_config.CP_size = 4;
+  rx_config.pilot_value = {1, 1};
+  rx_config.pilots_count = 4;
+  rx_config.guard_size = 2;
 
   std::thread gui_thread(run_gui, std::ref(tx_config), std::ref(rx_config));
   std::thread tx_thread(tx_run, std::ref(tx_config));
+  std::thread rx_thread(rx_run, std::ref(rx_config),
+                        std::ref(tx_config.ofdm_symbols_cp));
 
   gui_thread.join();
   tx_thread.join();
