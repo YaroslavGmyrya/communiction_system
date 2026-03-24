@@ -13,12 +13,15 @@ void rx_run(rx_cfg &config,
 
     samples = rx_samples;
 
+    // std::cout << "\n\n"
+    //           << samples.size() << "\n\n\n";
+
     if (samples.size() == 0)
       continue;
 
     /*correlation receiving. Get correlation function*/
     config.corr_func =
-        OFDM_corr_receiving(samples, config.FFT_size, config.CP_size);
+        OFDM_corr_receiving(samples, config.FFT_size, config.CP_size, 3);
 
     /*find peaks*/
     findPeaks::PeakConditions conditions;
@@ -32,12 +35,12 @@ void rx_run(rx_cfg &config,
     // std::cout << "\n\n\n";
     // for (int i = 0; i < config.peaks.size(); ++i)
     // {
-    //     std::cout << config.peaks[i] << " ";
+    //   std::cout << config.peaks[i] << " ";
     // }
 
     /*estimate coarse frequency offset with help correlation*/
-    CFO_correction(samples, config.peaks, config.corr_func, config.CP_size,
-                   config.FFT_size);
+    // CFO_correction(samples, config.peaks, config.corr_func, config.CP_size,
+    //                config.FFT_size);
 
     /*delete CP*/
     config.ofdm_symbols =
@@ -51,19 +54,35 @@ void rx_run(rx_cfg &config,
                                    config.guard_size);
 
     /*get channel estimation with help pilots*/
-    config.estimation = channel_estimation(config.ofdm_symbols, config.grid,
-                                           config.pilot_value);
+    // config.estimation = channel_estimation(config.ofdm_symbols, config.grid,
+    //                                        config.pilot_value);
 
     /*recovery signal*/
-    channel_equalization(config.ofdm_symbols, config.estimation);
+    // channel_equalization(config.ofdm_symbols, config.estimation);
 
     /*delete guard zeros and pilots. Extract data symbols*/
     config.raw_symbols =
-        extract_inner_symbols(config.ofdm_symbols, config.grid);
+        extract_inner_symbols(config.ofdm_symbols, config.grid, 0);
 
-    std::cout << "\n\n\n";
-    for (int i = 0; i < config.raw_symbols.size(); ++i) {
-      std::cout << config.raw_symbols[i] << " ";
-    }
+    // std::cout << "\n\n"
+    //           << config.raw_symbols.size() << "\n\n";
+
+    // std::cout << "\n\n\n";
+    // for (int i = 0; i < config.raw_symbols.size(); ++i)
+    // {
+    //   std::cout << config.raw_symbols[i] << " ";
+    // }
+
+    /*symbols -> bits*/
+    config.bits = QPSK_demodulation(config.raw_symbols);
+
+    /*deshuffuling bits*/
+    // config.bits = deintervale(config.bits, config.seed);
+
+    /*bits -> message*/
+    // config.message = decoder(config.bits);
+
+    // std::cout << "\n\n"
+    //           << config.message << "\n";
   }
 }

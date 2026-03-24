@@ -40,7 +40,7 @@
 
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-                    const int FFT_size, const int CP_size) {
+                    const int FFT_size, const int CP_size, const int padding) {
   std::vector<double> norm_corr;
 
   /*offset for prevention out of range*/
@@ -67,7 +67,7 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
   }
 
   double denom = std::sqrt(A * B);
-  norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
+  norm_corr.push_back(denom > 0 ? std::abs(corr) / denom : 0);
 
   /*
   update correlation
@@ -99,7 +99,7 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
         std::norm(samples[k + FFT_size + CP_size - 1]);
 
     denom = std::sqrt(A * B);
-    norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
+    norm_corr.push_back(denom > 0 ? std::abs(corr) / denom : 0);
   }
 
   return norm_corr;
@@ -202,7 +202,7 @@ delete_CP(const std::vector<std::complex<double>> &samples,
   /*size without CP*/
   result.reserve(peaks.size() * FFT_size);
 
-  for (int i = 0; i < peaks.size() - 1; ++i) {
+  for (int i = 0; i < peaks.size(); ++i) {
     int peak = peaks[i];
 
     /*start iterator of OFDM symbol*/
@@ -390,7 +390,7 @@ void channel_equalization(std::vector<std::complex<double>> &symbols,
 
 std::vector<std::complex<double>>
 extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
-                      const std::vector<cell_type> &grid) {
+                      const std::vector<cell_type> &grid, const int padding) {
   std::vector<std::complex<double>> clear_symbols;
   int k = 0;
   bool flag = true;
@@ -411,7 +411,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
 
     k++;
   }
-
+  clear_symbols.resize(clear_symbols.size() - padding);
   return clear_symbols;
 }
 

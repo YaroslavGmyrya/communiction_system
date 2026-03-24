@@ -42,34 +42,29 @@ create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
                    const int buff_size) {
   /*buff size - size of buffer in SDR*/
   std::vector<std::complex<double>> signal;
-  signal.reserve(buff_size);
 
   int k = 0;
 
   while (k < symbols.size()) {
     for (int j = 0; j < grid.size(); ++j) {
 
-      if (k < symbols.size()) {
-
-        /*if cell is guard, then signal is (0,0)*/
-        if (grid[j] == guard) {
-          signal.push_back({0, 0});
-        }
-
-        /*if cell is pilot, then insert pilot*/
-        else if (grid[j] == pilot) {
-          signal.push_back(pilot_value);
-        }
-
-        /*if cell is data, then insert symbol*/
-        else if (grid[j] == data) {
-          signal.push_back(symbols[k++]);
-        }
+      /*if cell is guard, then signal is (0,0)*/
+      if (grid[j] == guard) {
+        signal.push_back({0, 0});
       }
 
-      /*if PSK/QAM symbols are over, then fill symbol with zeros*/
-      else {
-        signal.push_back({-2, 2});
+      /*if cell is pilot, then insert pilot*/
+      else if (grid[j] == pilot) {
+        signal.push_back(pilot_value);
+      }
+
+      /*if cell is data, then insert symbol*/
+      else if (grid[j] == data) {
+        if (k >= symbols.size()) {
+          signal.push_back({0, 0});
+        } else {
+          signal.push_back(symbols[k++]);
+        }
       }
     }
   }
@@ -117,7 +112,7 @@ void batch_ifft(std::vector<std::complex<double>> &data,
     return;
   }
 
-  if (data.size() % (FFT_size + CP_size) != 0) {
+  if (data.size() % FFT_size != 0) {
     spdlog::error("[OFDM.cpp:batch_ifft]: Fractional number of OFDM symbols!");
     return;
   }

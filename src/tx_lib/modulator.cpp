@@ -20,7 +20,7 @@ std::vector<sample> BPSK(const std::vector<uint8_t> &bits) {
   std::vector<sample> out;
   out.reserve(bits.size());
 
-  for (int i = 0; i < bits.size(); i += 2) {
+  for (int i = 0; i < bits.size(); ++i) {
     IQ = (1 - 2 * bits[i]) / norm_coeff;
     out.push_back(sample(IQ, IQ));
   }

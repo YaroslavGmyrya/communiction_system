@@ -38,9 +38,11 @@ std::vector<uint8_t> deintervale(const std::vector<uint8_t> &bits,
  **/
 std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &samples);
 
+std::vector<uint8_t> BPSK_demodulator(const std::vector<sample> &symbols);
+
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-                    int FFT_size, int CP_size);
+                    int FFT_size, int CP_size, const int padding);
 
 void batch_fft(std::vector<std::complex<double>> &data,
                std::vector<std::complex<double>> &fft_out, int FFT_size);
@@ -77,7 +79,7 @@ void channel_equalization(std::vector<std::complex<double>> &symbols,
 
 std::vector<std::complex<double>>
 extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
-                      const std::vector<cell_type> &grid);
+                      const std::vector<cell_type> &grid, const int padding);
 
 void rx_run(rx_cfg &config,
             const std::vector<std::complex<double>> &rx_samples);

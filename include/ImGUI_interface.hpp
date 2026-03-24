@@ -28,6 +28,8 @@ struct tx_cfg {
   int pilots_count;
   int guard_size;
 
+  int seed = 10;
+
   std::vector<uint8_t> bits;
   std::vector<uint8_t> post_conv_coding;
   std::vector<uint8_t> post_shuffuling;
@@ -64,6 +66,9 @@ struct rx_cfg {
 
   int pilots_count;
   int guard_size;
+
+  int seed = 10;
+
   std::complex<double> pilot_value;
 
   // buffers
@@ -85,6 +90,8 @@ struct rx_cfg {
   std::vector<std::complex<double>> ofdm_symbols;
   std::vector<std::complex<double>> freq_domain;
   std::vector<std::complex<double>> estimation;
+  std::string message;
+  std::vector<uint8_t> bits;
   std::vector<cell_type> grid;
 };
 
