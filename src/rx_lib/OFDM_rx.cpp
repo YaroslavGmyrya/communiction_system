@@ -6,6 +6,8 @@
 
 #include "../../include/ImGUI_interface.hpp"
 
+using sample = std::complex<double>;
+
 // std::vector<cell_type> create_ofdm_grid(const int FFT_size,
 //                                         const int pilots_count,
 //                                         const int gi_size)
@@ -40,7 +42,8 @@
 
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-                    const int FFT_size, const int CP_size, const int padding) {
+                    const int FFT_size, const int CP_size, const int padding)
+{
   std::vector<double> norm_corr;
 
   /*offset for prevention out of range*/
@@ -58,7 +61,8 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
     if CP element have index k, then original element in end of OFDM symbol have
     index [k+FFT_size]
   */
-  for (int k = 0; k < CP_size; ++k) {
+  for (int k = 0; k < CP_size; ++k)
+  {
     corr += samples[k] * std::conj(samples[k + FFT_size]);
 
     /*|vector| = sqrt(vector[0] ^ 2 + vector[1] ^ 2 ...)*/
@@ -88,7 +92,8 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
   correlation for new element (right side)
   */
 
-  for (int k = 1; k < samples.size() - offset; ++k) {
+  for (int k = 1; k < samples.size() - offset; ++k)
+  {
     corr = corr - samples[k - 1] * std::conj(samples[k + FFT_size - 1]) +
            samples[k + CP_size - 1] *
                std::conj(samples[k + FFT_size + CP_size - 1]);
@@ -159,7 +164,8 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
 void CFO_correction(std::vector<std::complex<double>> &samples,
                     const std::vector<int> &peaks,
                     const std::vector<double> &correlation, const int CP_size,
-                    const int FFT_size) {
+                    const int FFT_size)
+{
   /*We can estimate coarse frequency offset b/w SDR.
     1. Take correlation peak (eps)
     2. CFO = -2pi*eps*k/CP_size
@@ -169,7 +175,8 @@ void CFO_correction(std::vector<std::complex<double>> &samples,
   int peak_idx;
   double eps;
 
-  for (int i = 0; i < peaks.size(); ++i) {
+  for (int i = 0; i < peaks.size(); ++i)
+  {
     /*step 1*/
     peak_idx = peaks[i];
 
@@ -177,7 +184,8 @@ void CFO_correction(std::vector<std::complex<double>> &samples,
     eps = correlation[peak_idx];
 
     /*step 3*/
-    for (int k = 0; k < FFT_size + CP_size; ++k) {
+    for (int k = 0; k < FFT_size + CP_size; ++k)
+    {
       /*
         peaks_idx - offset in buffer
         k - offset in symbol
@@ -191,9 +199,11 @@ void CFO_correction(std::vector<std::complex<double>> &samples,
 std::vector<std::complex<double>>
 delete_CP(const std::vector<std::complex<double>> &samples,
           const std::vector<int> &peaks, const int CP_size,
-          const int FFT_size) {
+          const int FFT_size)
+{
   /*check errors*/
-  if (samples.size() < FFT_size) {
+  if (samples.size() < FFT_size)
+  {
     return {};
   }
 
@@ -202,7 +212,8 @@ delete_CP(const std::vector<std::complex<double>> &samples,
   /*size without CP*/
   result.reserve(peaks.size() * FFT_size);
 
-  for (int i = 0; i < peaks.size(); ++i) {
+  for (int i = 0; i < peaks.size(); ++i)
+  {
     int peak = peaks[i];
 
     /*start iterator of OFDM symbol*/
@@ -217,12 +228,15 @@ delete_CP(const std::vector<std::complex<double>> &samples,
   return result;
 }
 
-std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid) {
+std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid)
+{
 
   std::vector<int> pos;
 
-  for (int i = 0; i < grid.size(); ++i) {
-    if (grid[i] == pilot) {
+  for (int i = 0; i < grid.size(); ++i)
+  {
+    if (grid[i] == pilot)
+    {
       pos.push_back(i);
     }
   }
@@ -230,22 +244,26 @@ std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid) {
   return pos;
 }
 
-void unwrap_phase(std::vector<double> &phase, int FFT_size) {
+void unwrap_phase(std::vector<double> &phase, int FFT_size)
+{
   int total_size = phase.size();
   int symbs_count = total_size / FFT_size;
 
-  for (int s = 0; s < symbs_count; ++s) {
+  for (int s = 0; s < symbs_count; ++s)
+  {
     double offset = 0.0;
     int prev_idx = -1;
 
     int start = s * FFT_size;
     int end = start + FFT_size;
 
-    for (int i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i)
+    {
       if (phase[i] == 0.0)
         continue;
 
-      if (prev_idx == -1) {
+      if (prev_idx == -1)
+      {
         prev_idx = i;
         continue;
       }
@@ -265,19 +283,23 @@ void unwrap_phase(std::vector<double> &phase, int FFT_size) {
 }
 
 void linear_interpolation(std::vector<std::complex<double>> &H,
-                          const std::vector<int> &pos, int FFT_size) {
+                          const std::vector<int> &pos, int FFT_size)
+{
   if (pos.size() < 2)
     return;
 
   int sym = 0;
   bool flag = true;
 
-  while (flag) {
-    for (int i = 0; i < pos.size() - 1; ++i) {
+  while (flag)
+  {
+    for (int i = 0; i < pos.size() - 1; ++i)
+    {
       int left_index = pos[i] + sym * FFT_size;
       int right_index = pos[i + 1] + sym * FFT_size;
 
-      if (left_index >= H.size() || right_index >= H.size()) {
+      if (left_index >= H.size() || right_index >= H.size())
+      {
         flag = false;
         break;
       }
@@ -285,7 +307,8 @@ void linear_interpolation(std::vector<std::complex<double>> &H,
       std::complex<double> left_point = H[left_index];
       std::complex<double> right_point = H[right_index];
 
-      for (int idx = left_index + 1; idx < right_index; ++idx) {
+      for (int idx = left_index + 1; idx < right_index; ++idx)
+      {
         double coeff = static_cast<double>(idx - left_index) /
                        static_cast<double>(right_index - left_index);
 
@@ -298,19 +321,23 @@ void linear_interpolation(std::vector<std::complex<double>> &H,
 }
 
 void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
-                           int FFT_size) {
+                           int FFT_size)
+{
   if (pos.size() < 2)
     return;
 
   int sym = 0;
   bool flag = true;
 
-  while (flag) {
-    for (int i = 0; i < pos.size() - 1; ++i) {
+  while (flag)
+  {
+    for (int i = 0; i < pos.size() - 1; ++i)
+    {
       int left_index = pos[i] + sym * FFT_size;
       int right_index = pos[i + 1] + sym * FFT_size;
 
-      if (left_index >= H.size() || right_index >= H.size()) {
+      if (left_index >= H.size() || right_index >= H.size())
+      {
         flag = false;
         break;
       }
@@ -318,7 +345,8 @@ void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
       double left_point = H[left_index];
       double right_point = H[right_index];
 
-      for (int idx = left_index + 1; idx < right_index; ++idx) {
+      for (int idx = left_index + 1; idx < right_index; ++idx)
+      {
         double coeff = static_cast<double>(idx - left_index) /
                        static_cast<double>(right_index - left_index);
 
@@ -333,7 +361,8 @@ void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
 std::vector<std::complex<double>>
 channel_estimation(std::vector<std::complex<double>> &signal,
                    const std::vector<cell_type> &grid,
-                   std::complex<double> pilot_value) {
+                   std::complex<double> pilot_value)
+{
   /*get pilots position from ofdm grid*/
   std::vector<int> pilots_pos = get_pilots_pos(grid);
 
@@ -351,9 +380,11 @@ channel_estimation(std::vector<std::complex<double>> &signal,
   std::complex<double> cur_estimation;
 
   /*iterate on symbols*/
-  for (int i = 0; i < symbs_count; ++i) {
+  for (int i = 0; i < symbs_count; ++i)
+  {
     /*iterate inside symbol*/
-    for (int j = 0; j < pilots_pos.size(); ++j) {
+    for (int j = 0; j < pilots_pos.size(); ++j)
+    {
       /*estimate channel influence on pilot (estimate channel)*/
       cur_estimation = signal[pilots_pos[j] + i * FFT_size] / pilot_value;
 
@@ -371,7 +402,8 @@ channel_estimation(std::vector<std::complex<double>> &signal,
   linear_interpolation2(phi, pilots_pos, FFT_size);
 
   /*build estimation from amplitude and phase*/
-  for (int i = 0; i < A.size(); ++i) {
+  for (int i = 0; i < A.size(); ++i)
+  {
     estimation[i] = A[i] * std::exp(std::complex<double>(0.0, phi[i]));
   }
 
@@ -379,9 +411,11 @@ channel_estimation(std::vector<std::complex<double>> &signal,
 }
 
 void channel_equalization(std::vector<std::complex<double>> &symbols,
-                          const std::vector<std::complex<double>> &estimation) {
+                          const std::vector<std::complex<double>> &estimation)
+{
   /*Recovery signal after channel influence*/
-  for (int i = 0; i < symbols.size(); ++i) {
+  for (int i = 0; i < symbols.size(); ++i)
+  {
     /*check on machine zero*/
     if (std::abs(estimation[i]) > 1e-12)
       symbols[i] /= estimation[i];
@@ -390,21 +424,26 @@ void channel_equalization(std::vector<std::complex<double>> &symbols,
 
 std::vector<std::complex<double>>
 extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
-                      const std::vector<cell_type> &grid, const int padding) {
+                      const std::vector<cell_type> &grid, const int padding)
+{
   std::vector<std::complex<double>> clear_symbols;
   int k = 0;
   bool flag = true;
 
-  while (flag) {
-    for (int i = 0; i < grid.size(); ++i) {
+  while (flag)
+  {
+    for (int i = 0; i < grid.size(); ++i)
+    {
       /*check out of range*/
-      if (i + k * grid.size() >= ofdm_symbols.size()) {
+      if (i + k * grid.size() >= ofdm_symbols.size())
+      {
         flag = false;
         break;
       }
 
       /*extract symbols with data only*/
-      if (grid[i] == data) {
+      if (grid[i] == data)
+      {
         clear_symbols.push_back(ofdm_symbols[i + k * grid.size()]);
       }
     }
@@ -416,21 +455,25 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
 }
 
 void batch_fft(std::vector<std::complex<double>> &data,
-               std::vector<std::complex<double>> &fft_out, int FFT_size) {
+               std::vector<std::complex<double>> &fft_out, int FFT_size)
+{
 
   /*check errors*/
 
-  if (data.size() == 0) {
+  if (data.size() == 0)
+  {
     spdlog::error("[OFDM.cpp:batch_ifft]: The data size is zero!");
     return;
   }
 
-  if (FFT_size <= 0) {
+  if (FFT_size <= 0)
+  {
     spdlog::error("[OFDM.cpp:batch_ifft]: The FFT_size size is invalid!");
     return;
   }
 
-  if (data.size() % FFT_size != 0) {
+  if (data.size() % FFT_size != 0)
+  {
     spdlog::error("[OFDM.cpp:batch_ifft]: Fractional number of OFDM symbols!");
     return;
   }
@@ -465,4 +508,54 @@ void batch_fft(std::vector<std::complex<double>> &data,
 
   /*delete FFTW3 plan*/
   fftw_destroy_plan(plan);
+}
+
+std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples,
+                            const std::vector<std::complex<double>> &ZC)
+{
+  std::vector<double> corr_func;
+
+  // for (int i = 0; i < samples.size(); ++i)
+  // {
+  //   std::cout << samples[i] << " ";
+  // }
+
+  // std::cout << "\n\n\n";
+
+  double B = 0;
+
+  for (int i = 0; i < ZC.size(); ++i)
+    B += std::norm(ZC[i]);
+
+  for (int k = 0; k <= samples.size() - ZC.size(); ++k)
+  {
+    std::complex<double> R = 0;
+    double A = 0;
+
+    for (int i = 0; i < ZC.size(); ++i)
+    {
+      R += samples[k + i] * std::conj(ZC[i]);
+      A += std::norm(samples[k + i]);
+    }
+
+    double coeff = std::sqrt(A * B);
+    corr_func.push_back(coeff != 0.0 ? std::abs(R) / coeff : 0);
+  }
+
+  return corr_func;
+}
+
+void CFO_correction(std::vector<sample> &samples, const std::vector<sample> &corr_function, const std::vector<int> &peaks, const double Ts)
+{
+  double cfo = std::arg(corr_function[peaks[1]] * std::conj(corr_function[peaks[0]]));
+  int range = peaks[1] - peaks[0];
+
+  cfo = cfo / (2 * M_PI * range * Ts);
+
+  for (int i = 0; i < samples.size(); ++i)
+  {
+    double phi = 2.0 * M_PI * cfo * i * Ts;
+    std::complex<double> rot = std::exp(std::complex<double>(0.0, -phi));
+    samples[i] *= rot;
+  }
 }

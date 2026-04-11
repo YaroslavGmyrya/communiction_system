@@ -1,6 +1,7 @@
 sudo apt install -y doxygen graphviz pre-commit
 sudo apt install libsdl2-dev libgl1-mesa-dev libglew-dev # for ImGui
-
+sudo apt install libspdlog-dev
+sudo apt install libfmt-dev
 # Install zmqpp (C++ version zmq)
 
 cd ../third_party

@@ -129,12 +129,16 @@ create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
                    std::complex<double> pilot_value, int buff_size);
 
 std::vector<std::complex<double>>
-add_CP(const std::vector<std::complex<double>> &samples, int FFT_size,
-       int CP_size);
+add_CP(const std::vector<std::complex<double>> &samples, const int FFT_size,
+       const int CP_size, const int sym_offset);
 
 void batch_ifft(std::vector<std::complex<double>> &data,
                 std::vector<std::complex<double>> &ifft_out, const int FFT_size,
                 const int CP_size);
+
+std::vector<std::complex<double>> ZC_gen(const int root, const int FFT_size);
+
+std::vector<std::complex<double>> add_ZC(const std::vector<std::complex<double>> &ofdm_samples, const std::vector<std::complex<double>> &ZC);
 
 /**
  * @brief Run TX processing chain and update shared TX configuration.

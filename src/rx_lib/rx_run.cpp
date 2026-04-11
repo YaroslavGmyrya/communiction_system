@@ -4,85 +4,87 @@
 #include "../../include/ImGUI_interface.hpp"
 #include "../../include/find_peaks.hpp"
 #include "../../include/rx_lib.hpp"
+#include "../../include/tx_lib.hpp"
 
-void rx_run(rx_cfg &config,
-            const std::vector<std::complex<double>> &rx_samples) {
-  std::vector<std::complex<double>> samples;
+void rx_run(rx_cfg &config, const std::vector<std::complex<double>> &rx_samples)
+{
 
-  while (config.run) {
+  /*generate ZC-sequence*/
+  std::vector<std::complex<double>> tmp_zc = ZC_gen(25, config.FFT_size);
 
-    samples = rx_samples;
+  /*ZC to time domain*/
+  batch_ifft(tmp_zc, config.zc, config.FFT_size, config.CP_size);
 
-    // std::cout << "\n\n"
-    //           << samples.size() << "\n\n\n";
+  /*create ofdm grid*/
+  config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count,
+                                 config.guard_size);
 
-    if (samples.size() == 0)
+  while (config.run)
+  {
+
+    if (rx_samples.size() == 0)
       continue;
 
-    /*correlation receiving. Get correlation function*/
-    config.corr_func =
-        OFDM_corr_receiving(samples, config.FFT_size, config.CP_size, 3);
+    /*===================================================== FRAME SYNC ==========================================================================*/
+    /*get correlation function on PSS*/
+    config.zc_corr = ZC_corr(rx_samples, config.zc);
+
+    /*find correlation peaks*/
+    findPeaks::PeakConditions conditions;
+    conditions.set_height(0.9); // min peak value (filter)
+    std::vector<int> zc_peaks = findPeaks::find_peaks(config.zc_corr, conditions);
+
+    if (zc_peaks.size() != 2)
+      continue;
+
+    /*cut signal (extract useful signal)*/
+    const int start_idx = zc_peaks[1] + config.FFT_size;
+    const int end_idx = zc_peaks[2] - config.CP_size;
+
+    config.cut_samples.reserve(end_idx - start_idx);
+
+    for (int i = start_idx; i < end_idx; ++i)
+    {
+      config.cut_samples.push_back(rx_samples[i]);
+    }
+
+    /*===================================================== SYM SYNC ==========================================================================*/
+
+    /*Get correlation function on CP*/
+    config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size, 0);
 
     /*find peaks*/
-    findPeaks::PeakConditions conditions;
-
-    conditions.set_height(0.9);
-    // conditions.set_prominence(0.5);
-    conditions.set_distance(config.FFT_size + config.CP_size);
-
-    config.peaks = findPeaks::find_peaks(config.corr_func, conditions);
-
-    // std::cout << "\n\n\n";
-    // for (int i = 0; i < config.peaks.size(); ++i)
-    // {
-    //   std::cout << config.peaks[i] << " ";
-    // }
+    conditions.set_height(0.9);                                // min correlation value
+    conditions.set_distance(config.FFT_size + config.CP_size); // min distance bw peaks (ofdm symbol size)
+    config.CP_peaks = findPeaks::find_peaks(config.CP_corr, conditions);
 
     /*estimate coarse frequency offset with help correlation*/
-    // CFO_correction(samples, config.peaks, config.corr_func, config.CP_size,
-    //                config.FFT_size);
+    // CFO_correction(config.cut_samples, config.CP_peaks, config.CP_corr, config.CP_size, config.FFT_size);
 
     /*delete CP*/
-    config.ofdm_symbols =
-        delete_CP(samples, config.peaks, config.CP_size, config.FFT_size);
+    config.ofdm_symbols = delete_CP(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size);
 
     /*time domain -> frequency domain*/
     batch_fft(config.ofdm_symbols, config.freq_domain, config.FFT_size);
 
-    /*create ofdm grid*/
-    config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count,
-                                   config.guard_size);
+    /*=============================================================== CHANNEL ESTIMATION ===================================================================================*/
 
     /*get channel estimation with help pilots*/
-    // config.estimation = channel_estimation(config.ofdm_symbols, config.grid,
-    //                                        config.pilot_value);
+    config.estimation = channel_estimation(config.ofdm_symbols, config.grid, config.pilot_value);
 
     /*recovery signal*/
-    // channel_equalization(config.ofdm_symbols, config.estimation);
+    channel_equalization(config.ofdm_symbols, config.estimation);
 
     /*delete guard zeros and pilots. Extract data symbols*/
-    config.raw_symbols =
-        extract_inner_symbols(config.ofdm_symbols, config.grid, 0);
-
-    // std::cout << "\n\n"
-    //           << config.raw_symbols.size() << "\n\n";
-
-    // std::cout << "\n\n\n";
-    // for (int i = 0; i < config.raw_symbols.size(); ++i)
-    // {
-    //   std::cout << config.raw_symbols[i] << " ";
-    // }
+    config.raw_symbols = extract_inner_symbols(config.ofdm_symbols, config.grid, 0);
 
     /*symbols -> bits*/
-    config.bits = QPSK_demodulation(config.raw_symbols);
+    // config.bits = QPSK_demodulation(config.raw_symbols);
 
     /*deshuffuling bits*/
     // config.bits = deintervale(config.bits, config.seed);
 
     /*bits -> message*/
     // config.message = decoder(config.bits);
-
-    // std::cout << "\n\n"
-    //           << config.message << "\n";
   }
 }

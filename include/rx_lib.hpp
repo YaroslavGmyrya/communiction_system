@@ -83,3 +83,5 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
 
 void rx_run(rx_cfg &config,
             const std::vector<std::complex<double>> &rx_samples);
+
+std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples, const std::vector<std::complex<double>> &ZC);

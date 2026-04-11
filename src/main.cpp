@@ -10,7 +10,8 @@
 #include "../include/rx_lib.hpp"
 #include "../include/tx_lib.hpp"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
   /*init TX config*/
   tx_cfg tx_config;
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
   tx_config.pilot = {1, 1};
   tx_config.pilots_count = 8;
   tx_config.guard_size = 3;
+  tx_config.message = "message";
 
   /*init RX config*/
   rx_cfg rx_config;
@@ -50,11 +52,14 @@ int main(int argc, char *argv[]) {
 
   std::thread gui_thread(run_gui, std::ref(tx_config), std::ref(rx_config));
   std::thread tx_thread(tx_run, std::ref(tx_config));
-  std::thread rx_thread(rx_run, std::ref(rx_config),
-                        std::ref(tx_config.ofdm_symbols_cp));
+  std::thread rx_thread(rx_run, std::ref(rx_config), std::ref(tx_config.ofdm_symbols_cp));
 
   gui_thread.join();
   tx_thread.join();
+
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  rx_thread.join();
 
   return 0;
 }
