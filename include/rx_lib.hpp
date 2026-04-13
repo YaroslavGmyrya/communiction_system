@@ -82,6 +82,8 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
                       const std::vector<cell_type> &grid, const int padding);
 
 void rx_run(rx_cfg &config,
-            const std::vector<std::complex<double>> &rx_samples);
+            const tx_cfg &tx_config);
 
 std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples, const std::vector<std::complex<double>> &ZC);
+
+double BER(const std::vector<uint8_t>& rx_bits,  const std::vector<uint8_t>& tx_bits);

@@ -65,6 +65,7 @@ struct rx_cfg
   int FFT_size;  // subcarriers count
   int CP_size;   // Cyclic prefix size
   int count_OFDM_symb;
+  double BER;
 
   // gardner params
   double gardner_BnTs;
@@ -82,7 +83,7 @@ struct rx_cfg
   std::complex<double> pilot_value;
 
   // buffers
-  std::vector<std::complex<int16_t>> rx_samples;
+  std::vector<std::complex<double>> rx_samples;
   std::vector<std::complex<double>> mf_samples_out;
   std::vector<std::complex<double>> raw_symbols;
   std::vector<double> CP_corr;

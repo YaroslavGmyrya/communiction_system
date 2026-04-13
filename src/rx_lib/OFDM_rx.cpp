@@ -442,7 +442,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
       }
 
       /*extract symbols with data only*/
-      if (grid[i] == data)
+      if (grid[i] == data && std::abs(ofdm_symbols[i + k * grid.size()]) > 1e-12)
       {
         clear_symbols.push_back(ofdm_symbols[i + k * grid.size()]);
       }
@@ -450,7 +450,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
 
     k++;
   }
-  clear_symbols.resize(clear_symbols.size() - padding);
+  // clear_symbols.resize(clear_symbols.size() - padding);
   return clear_symbols;
 }
 
@@ -558,4 +558,22 @@ void CFO_correction(std::vector<sample> &samples, const std::vector<sample> &cor
     std::complex<double> rot = std::exp(std::complex<double>(0.0, -phi));
     samples[i] *= rot;
   }
+}
+
+double BER(const std::vector<uint8_t>& rx_bits,  const std::vector<uint8_t>& tx_bits){
+  if(rx_bits.size() != tx_bits.size()){
+    spdlog::error("RX_BITS and TX_BITS must be have same size!");
+    return -1;
+  }
+
+  double BER = 0;
+
+  for(int i = 0; i < rx_bits.size(); ++i){
+    BER += rx_bits[i] == tx_bits[i] ? 0 : 1;
+  }
+
+  BER /= rx_bits.size();
+
+  return BER;
+
 }

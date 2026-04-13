@@ -160,6 +160,11 @@ void batch_ifft(std::vector<std::complex<double>> &data,
   /*calculate IFFT*/
   fftw_execute(plan);
 
+  for (auto &x : ifft_out)
+  {
+    x /= FFT_size;
+  }
+
   /*delete FFTW3 plan*/
   fftw_destroy_plan(plan);
 }

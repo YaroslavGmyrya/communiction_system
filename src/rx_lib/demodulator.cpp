@@ -40,7 +40,7 @@ std::vector<uint8_t> BPSK_demodulator(const std::vector<sample> &symbols) {
     double I = symbols[i].real();
     double Q = symbols[i].imag();
 
-    uint8_t b0 = (I > 0) ? 1 : 0;
+    uint8_t b0 = (I > 0) ? 0 : 1;
 
     bits.push_back(b0);
   }

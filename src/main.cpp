@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
   tx_config.pilots_count = 8;
   tx_config.guard_size = 3;
   tx_config.message = "message";
+  tx_config.DEBUG_MODE = false;
 
   /*init RX config*/
   rx_cfg rx_config;
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
   rx_config.gardner_BnTs = 0.5;
   rx_config.gardner_Kp = 1;
   rx_config.IR_type = 1;
-  rx_config.mod_order = 2;
+  rx_config.mod_order = 2;  
   rx_config.sps = 10;
   // rx_config.rx_samples.resize(sdr_config.buff_size);
   rx_config.OFDM = 0;
@@ -52,12 +53,13 @@ int main(int argc, char *argv[])
 
   std::thread gui_thread(run_gui, std::ref(tx_config), std::ref(rx_config));
   std::thread tx_thread(tx_run, std::ref(tx_config));
-  std::thread rx_thread(rx_run, std::ref(rx_config), std::ref(tx_config.ofdm_symbols_cp));
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  std::thread rx_thread(rx_run, std::ref(rx_config), std::ref(tx_config));
 
   gui_thread.join();
   tx_thread.join();
 
-  std::this_thread::sleep_for(std::chrono::seconds(2));
 
   rx_thread.join();
 

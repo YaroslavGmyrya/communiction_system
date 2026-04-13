@@ -9,7 +9,8 @@
 void tx_run(tx_cfg &config)
 {
 
-  config.message = "message";
+  config.message = "One thing, I don't know why It doesn't even matter how hard you try Keep that in mind, I designed this rhyme to explain in due time All I know time is a valuable thing Watch it fly by as the pendulum swings Watch it count down to the end of the day, the clock ticks life away It's so unreal, didn't look out below Watch the time go right out the window Tryna hold on, d-didn't even know I wasted it all just to watch you go";
+  // config.message = "One thing, I don't";
 
   const int ZC_ROOT = 25;
 
@@ -33,6 +34,14 @@ void tx_run(tx_cfg &config)
     /*generate ofdm symbols*/
     config.ofdm_symbols = create_ofdm_signal(config.symbols, config.grid,
                                              config.pilot, config.buff_size);
+
+    // std::cout << "TX:\n";                                      
+    // for(int i = 0; i < config.ofdm_symbols.size(); ++i){
+    //   std::cout << config.ofdm_symbols[i] << " ";
+    // }
+
+    // std::cout << "\n\n";
+
     /*add ZC*/
     config.ofdm_symbols = add_ZC(config.ofdm_symbols, config.zc);
 
@@ -44,8 +53,8 @@ void tx_run(tx_cfg &config)
     config.ofdm_symbols_cp = add_CP(config.ofdm_signal, config.FFT_size, config.CP_size, 0);
 
     /*Add trash*/
-    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 500, 0);
-    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.end(), 500, 0);
+    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 5, 0);
+    config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.end(), 5, 0);
 
     std ::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
