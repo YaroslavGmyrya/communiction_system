@@ -47,7 +47,7 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
   std::vector<double> norm_corr;
 
   /*offset for prevention out of range*/
-  const int offset = FFT_size + CP_size;
+  const int offset = FFT_size + CP_size - 1;
 
   /*length of vectors (for normalization)*/
   double A = 0;

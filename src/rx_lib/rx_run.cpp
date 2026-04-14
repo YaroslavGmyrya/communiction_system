@@ -30,6 +30,8 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     if (config.rx_samples.size() == 0)
       continue;
 
+    std::cout << config.rx_samples.size() << "\n\n";
+
     /*===================================================== FRAME SYNC ==========================================================================*/
     /*get correlation function on PSS*/
     config.zc_corr = ZC_corr(config.rx_samples, config.zc);
@@ -54,28 +56,31 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
       config.cut_samples[i-start_idx] = config.rx_samples[i];
     }
 
-      config.cut_samples.insert(config.cut_samples.begin(), 2, 0);
-    config.cut_samples.insert(config.cut_samples.end(), 2, 0);
+    std::cout << config.cut_samples.size() << "\n\n";
 
     /*===================================================== SYM SYNC ==========================================================================*/
 
     /*Get correlation function on CP*/
     config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size, 0);
 
+      config.CP_corr.insert(config.CP_corr.begin(), 1, 0);
+    config.CP_corr.insert(config.CP_corr.end(), 1, 0);
+
 
     /*find peaks*/
-    conditions.set_height(0.92);                                // min correlation value
+    conditions.set_height(0.9);                                // min correlation value
     conditions.set_distance(config.FFT_size + config.CP_size); // min distance bw peaks (ofdm symbol size)
     config.CP_peaks = findPeaks::find_peaks(config.CP_corr, conditions);
+    
 
     for(int &el : config.CP_peaks){
-      el -= 2;
-      std::cout << el << " ";
+      el -= 1;
+      // std::cout << el << " ";
     }
 
     // config.CP_peaks[config.CP_peaks.size() - 1] += 1;
 
-    std::cout << "\n\n";
+    std::cout << "peaks: " << config.CP_peaks.size() << "\n\n";
 
     // /*estimate coarse frequency offset with help correlation*/
     // // CFO_correction(config.cut_samples, config.CP_peaks, config.CP_corr, config.CP_size, config.FFT_size);
@@ -83,19 +88,19 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     // /*delete CP*/
     config.ofdm_symbols = delete_CP(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size);
 
-    // std::cout << config.ofdm_symbols.size() << "\n\n";
+    std::cout << "POST CP: " << config.ofdm_symbols.size() << "\n\n";
 
     // /*time domain -> frequency domain*/
     batch_fft(config.ofdm_symbols, config.freq_domain, config.FFT_size);
 
 
-   for(int i = 0; i < config.freq_domain.size(); ++i){
-      if(i % (config.FFT_size) == 0)
-      printf("\n\n");
-      std::cout << config.freq_domain[i] << " ";
-    }
+  //  for(int i = 0; i < config.freq_domain.size(); ++i){
+  //     if(i % (config.FFT_size) == 0)
+  //     printf("\n\n");
+  //     std::cout << config.freq_domain[i] << " ";
+  //   }
 
-    // std::cout << "\n\n";
+    std::cout << config.freq_domain.size() << "\n\n";
 
     // /*=============================================================== CHANNEL ESTIMATION ===================================================================================*/
 
@@ -114,7 +119,7 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     //   std::cout << config.raw_symbols[i] << " ";
     // }
 
-    // std::cout << config.raw_symbols.size() << "\n\n";
+    std::cout << config.raw_symbols.size() << "\n\n";
 
     /*symbols -> bits*/
     config.bits = BPSK_demodulator(config.raw_symbols);
@@ -125,14 +130,17 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 
     // std::cout << "\n\n";
 
-    //        for(auto &el : tx_config.bits){
+    // for(auto &el : tx_config.bits){
     //   printf("%d ", el);
     // }
+
+    // std::cout << config.bits.size() << "\n\n";
+    // std::cout << tx_config.bits.size() << "\n\n";
 
 
     config.BER = BER(config.bits, tx_config.bits);
 
-    // std::cout << "BER: " << config.BER << "\n\n";
+    std::cout << "\n\nBER: " << config.BER << "\n\n";
 
     /*deshuffuling bits*/
     // config.bits = deintervale(config.bits, config.seed);
