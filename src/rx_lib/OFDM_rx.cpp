@@ -510,39 +510,57 @@ void batch_fft(std::vector<std::complex<double>> &data,
   fftw_destroy_plan(plan);
 }
 
-std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples,
-                            const std::vector<std::complex<double>> &ZC)
+std::vector<double>
+ZC_corr(const std::vector<std::complex<double>>& samples,
+                  const std::vector<std::complex<double>>& zc)
 {
-  std::vector<double> corr_func;
+    std::vector<double> norm_corr;
 
-  // for (int i = 0; i < samples.size(); ++i)
-  // {
-  //   std::cout << samples[i] << " ";
-  // }
+    const size_t N = samples.size();
+    const size_t M = zc.size();
 
-  // std::cout << "\n\n\n";
+    if (M == 0 || N < M)
+        return norm_corr;
 
-  double B = 0;
+    const size_t num_positions = N - M + 1;
+    norm_corr.reserve(num_positions);
 
-  for (int i = 0; i < ZC.size(); ++i)
-    B += std::norm(ZC[i]);
+    /* energy of ZC sequence */
+    double B = 0.0;
+    for (size_t k = 0; k < M; ++k)
+        B += std::norm(zc[k]);
 
-  for (int k = 0; k <= samples.size() - ZC.size(); ++k)
-  {
-    std::complex<double> R = 0;
-    double A = 0;
+    /* energy of first received window */
+    double A = 0.0;
+    for (size_t k = 0; k < M; ++k)
+        A += std::norm(samples[k]);
 
-    for (int i = 0; i < ZC.size(); ++i)
+    /* full correlation for first window */
+    std::complex<double> corr = 0.0;
+    for (size_t k = 0; k < M; ++k)
+        corr += samples[k] * std::conj(zc[k]);
+
+    double denom = std::sqrt(A * B);
+    norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
+
+    /*
+      For next positions:
+      - update A recursively as sliding window energy
+      - recompute corr for new window
+    */
+    for (size_t n = 1; n < num_positions; ++n)
     {
-      R += samples[k + i] * std::conj(ZC[i]);
-      A += std::norm(samples[k + i]);
+        A = A - std::norm(samples[n - 1]) + std::norm(samples[n + M - 1]);
+
+        corr = 0.0;
+        for (size_t k = 0; k < M; ++k)
+            corr += samples[n + k] * std::conj(zc[k]);
+
+        denom = std::sqrt(A * B);
+        norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
     }
 
-    double coeff = std::sqrt(A * B);
-    corr_func.push_back(coeff != 0.0 ? std::abs(R) / coeff : 0);
-  }
-
-  return corr_func;
+    return norm_corr;
 }
 
 void CFO_correction(std::vector<sample> &samples, const std::vector<sample> &corr_function, const std::vector<int> &peaks, const double Ts)

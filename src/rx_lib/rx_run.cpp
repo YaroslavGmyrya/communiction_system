@@ -33,8 +33,16 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     std::cout << config.rx_samples.size() << "\n\n";
 
     /*===================================================== FRAME SYNC ==========================================================================*/
+    auto start = std::chrono::high_resolution_clock::now();
     /*get correlation function on PSS*/
     config.zc_corr = ZC_corr(config.rx_samples, config.zc);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration_us =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "Time: " << duration_us.count() << " us" << std::endl;
+    std::cout << "Time: " << duration_us.count() / 1000.0 << " ms" << std::endl;
 
     /*find correlation peaks*/
     findPeaks::PeakConditions conditions;
