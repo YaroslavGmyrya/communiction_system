@@ -78,6 +78,8 @@ struct rx_cfg
   int pilots_count;
   int guard_size;
 
+  bool DEBUG_MODE = false;
+
   int seed = 10;
 
   std::complex<double> pilot_value;

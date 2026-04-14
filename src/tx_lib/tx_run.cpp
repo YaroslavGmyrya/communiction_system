@@ -9,8 +9,8 @@
 void tx_run(tx_cfg &config)
 {
 
-  // config.message = "One thing, I don't know why It doesn't even matter how hard you try Keep that in mind, I designed this rhyme to explain in due time All I know time is a valuable thing Watch it fly by as the pendulum swings Watch it count down to the end of the day, the clock ticks life away It's so unreal, didn't look out below Watch the time go right out the window Tryna hold on, d-didn't even know I wasted it all just to watch you go";
-  config.message = "One thing, I don't know why It doesn't even matter how hard you try Keep that in mind, I designed this rhyme to explain in due time All I know time is a valuable thing Watch it flyby as the pendulum swings Watch it count down to the end of the day, the clock ticks life away It's so unreal, didn't look out below Watch the time go right out the window Tryna hold on, d-didn't even know I wasted it all just to watch you go  I don't know why It doesn't even matter how hard you try Keep that in mi";
+  config.message = "One thing, I don't know why It doesn't even matter how hard you try Keep that in mind, I designed this rhyme to explain in due time All I know time is a valuable thing Watch it fly by as the pendulum swings Watch it count down to the end of the day, the clock ticks life away It's so unreal, didn't look out below Watch the time go right out the window Tryna hold on, d-didn't even know I wasted it all just to watch you go";
+  // config.message = "One thing";
 
   const int ZC_ROOT = 25;
 
@@ -35,13 +35,6 @@ void tx_run(tx_cfg &config)
     config.ofdm_symbols = create_ofdm_signal(config.symbols, config.grid,
                                              config.pilot, config.buff_size);
 
-    // std::cout << "TX:\n";                                      
-    // for(int i = 0; i < config.ofdm_symbols.size(); ++i){
-    //   std::cout << config.ofdm_symbols[i] << " ";
-    // }
-
-    // std::cout << "\n\n";
-
     /*add ZC*/
     config.ofdm_symbols = add_ZC(config.ofdm_symbols, config.zc);
 
@@ -58,7 +51,7 @@ void tx_run(tx_cfg &config)
 
     std ::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-    /*DEBUG INFO*/
+    /*================================================= DEBUG INFO =========================================================*/
 
     if (config.DEBUG_MODE)
     {

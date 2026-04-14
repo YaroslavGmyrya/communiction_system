@@ -39,6 +39,16 @@ ImPlotPoint get_points(int idx, void *data)
   return ImPlotPoint(s.real(), s.imag());
 }
 
+template <typename T>
+ImPlotPoint get_abs(int idx, void *data)
+{
+  auto *vec = static_cast<std::vector<std::complex<T>> *>(data);
+
+  const auto &s = (*vec)[idx];
+
+  return ImPlotPoint(idx, std::abs((*vec)[idx]));
+}
+
 ImPlotPoint get_phase_spec(int idx, void *data)
 {
   auto *fft = static_cast<
@@ -208,6 +218,10 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
             ImGui::RadioButton("QAM256", &rx_config.mod_order, 256);
             ImGui::RadioButton("QAM1024", &rx_config.mod_order, 1024);
 
+             if (ImGui::Checkbox("DEBUG MODE", &rx_config.DEBUG_MODE))
+            {
+            }
+
             ImGui::SeparatorText("OFDM");
             ImGui::InputInt("FFT size", &rx_config.FFT_size, 1, 128);
             ImGui::InputInt("Cyclic prefix size", &rx_config.CP_size, 1, 128);
@@ -258,6 +272,16 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
               ImPlot::PlotLineG("CP corr", get_value<double>,
                                 &rx_config.CP_corr,
                                 rx_config.CP_corr.size());
+              ImPlot::EndPlot();
+            }
+
+            if (ImPlot::BeginPlot("CHANNEL ESTIMATION",
+                                  ImVec2(-1, plot_height)))
+            {
+              ImPlot::SetupAxes("Time", "ESTIMATION");
+              ImPlot::PlotLineG("ESTIMATION", get_abs<double>,
+                                &rx_config.estimation,
+                                rx_config.estimation.size());
               ImPlot::EndPlot();
             }
 
