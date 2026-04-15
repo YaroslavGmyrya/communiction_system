@@ -43,7 +43,7 @@ void tx_run(tx_cfg &config)
                config.CP_size);
 
     /*Add CP*/
-    config.ofdm_symbols_cp = add_CP(config.ofdm_signal, config.FFT_size, config.CP_size, 0);
+    config.ofdm_symbols_cp = add_CP(config.ofdm_signal, config.FFT_size, config.CP_size);
 
     /*Add trash*/
     config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 5, 0);

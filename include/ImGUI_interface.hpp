@@ -90,6 +90,8 @@ struct rx_cfg
 
   std::vector<std::complex<double>> freq_domain;    // symbols in frequency domain
 
+  std::vector<std::complex<double>> raw_symbols;    // symbols in frequency domain
+
   std::vector<uint8_t> bits;  
 
   std::string message;     

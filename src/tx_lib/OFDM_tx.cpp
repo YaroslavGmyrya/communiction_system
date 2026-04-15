@@ -86,8 +86,7 @@ create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
 std::vector<std::complex<double>>
 add_CP(const std::vector<std::complex<double>> &samples,
        int FFT_size,
-       int CP_size,
-       int sym_offset)
+       int CP_size)
 {
 
   const int symbols_count = samples.size() / FFT_size;

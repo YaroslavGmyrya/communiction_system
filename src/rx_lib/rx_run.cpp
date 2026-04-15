@@ -59,7 +59,7 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     /*===================================================== SYM SYNC ==========================================================================*/
 
     /*Get correlation function on CP*/
-    config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size, 0);
+    config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size);
 
     config.CP_corr.insert(config.CP_corr.begin(), 1, 0);
     config.CP_corr.insert(config.CP_corr.end(), 1, 0);

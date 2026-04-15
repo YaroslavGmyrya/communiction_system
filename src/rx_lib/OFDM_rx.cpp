@@ -11,7 +11,7 @@ using sample = std::complex<double>;
 
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-                    const int FFT_size, const int CP_size, const int padding)
+                    const int FFT_size, const int CP_size)
 {
   std::vector<double> norm_corr;
 

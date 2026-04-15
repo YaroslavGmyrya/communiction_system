@@ -7,7 +7,6 @@ using sample = std::complex<double>;
 
 
 /**
- * @file AWGN.cpp
  * @brief Add Additive White Gaussian Noise
  
  * @param[in] samples signal samples
