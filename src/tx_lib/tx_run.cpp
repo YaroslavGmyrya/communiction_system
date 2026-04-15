@@ -33,7 +33,7 @@ void tx_run(tx_cfg &config)
 
     /*generate ofdm symbols*/
     config.ofdm_symbols = create_ofdm_signal(config.symbols, config.grid,
-                                             config.pilot, config.buff_size);
+                                             config.pilot);
 
     /*add ZC*/
     config.ofdm_symbols = add_ZC(config.ofdm_symbols, config.zc);
@@ -49,7 +49,7 @@ void tx_run(tx_cfg &config)
     config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 5, 0);
     config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.end(), 5, 0);
 
-    std ::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std ::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
     /*================================================= DEBUG INFO =========================================================*/
 

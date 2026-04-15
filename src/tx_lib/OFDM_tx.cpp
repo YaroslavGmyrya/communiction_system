@@ -41,8 +41,7 @@ std::vector<cell_type> create_ofdm_grid(const int FFT_size,
 std::vector<std::complex<double>>
 create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
                    const std::vector<cell_type> &grid,
-                   const std::complex<double> pilot_value,
-                   const int buff_size)
+                   const std::complex<double> pilot_value)
 {
   /*buff size - size of buffer in SDR*/
   std::vector<std::complex<double>> signal;

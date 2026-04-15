@@ -8,37 +8,6 @@
 
 using sample = std::complex<double>;
 
-// std::vector<cell_type> create_ofdm_grid(const int FFT_size,
-//                                         const int pilots_count,
-//                                         const int gi_size)
-// {
-//     // create grid and fill her by data cell
-//     std::vector<cell_type> grid(FFT_size, data);
-
-//     // fill left/right guard
-//     for (int i = 0; i < gi_size; ++i)
-//     {
-//         grid[i] = guard;
-//         grid[grid.size() - i - 1] = guard;
-//     }
-
-//     /*compute space b/w pilots. Each symbol has pilots on the sides, and in
-//     the
-//      * center the pilots are distributed evenly*/
-//     double pilot_step = double(FFT_size - 2 * gi_size - 1) / (pilots_count -
-//     1);
-
-//     int pilot_pos;
-
-//     // fill pilots
-//     for (int i = 0; i < pilots_count; ++i)
-//     {
-//         pilot_pos = gi_size + std::lround(i * pilot_step);
-//         grid[pilot_pos] = pilot;
-//     }
-
-//     return grid;
-// }
 
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
@@ -110,56 +79,6 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
   return norm_corr;
 }
 
-// #include <vector>
-// #include <complex>
-// #include <cmath>
-
-// std::vector<double>
-// OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
-//                     const int FFT_size, const int CP_size)
-// {
-//     std::vector<double> norm_corr;
-
-//     if (FFT_size <= 0 || CP_size <= 0)
-//         return norm_corr;
-
-//     const size_t offset = static_cast<size_t>(FFT_size + CP_size);
-
-//     if (samples.size() < offset)
-//         return norm_corr;
-
-//     std::complex<double> corr = 0.0;
-//     double A = 0.0;
-//     double B = 0.0;
-
-//     for (int k = 0; k < CP_size; ++k)
-//     {
-//         corr += samples[k] * std::conj(samples[k + FFT_size]);
-//         A += std::norm(samples[k]);
-//         B += std::norm(samples[k + FFT_size]);
-//     }
-
-//     {
-//         double denom = std::sqrt(A * B);
-//         norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
-//     }
-
-//     for (size_t k = 1; k < samples.size() - offset; ++k)
-//     {
-//         corr = corr - samples[k - 1] * std::conj(samples[k + FFT_size - 1]) +
-//         samples[k + CP_size - 1] * std::conj(samples[k + FFT_size + CP_size -
-//         1]);
-
-//         A = A - std::norm(samples[k - 1]) + std::norm(samples[k + CP_size -
-//         1]); B = B - std::norm(samples[k + FFT_size - 1]) +
-//         std::norm(samples[k + FFT_size + CP_size - 1]);
-
-//         double denom = std::sqrt(A * B);
-//         norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
-//     }
-
-//     return norm_corr;
-// }
 
 void CFO_correction(std::vector<std::complex<double>> &samples,
                     const std::vector<int> &peaks,
@@ -282,45 +201,8 @@ void unwrap_phase(std::vector<double> &phase, int FFT_size)
   }
 }
 
-void linear_interpolation(std::vector<std::complex<double>> &H,
-                          const std::vector<int> &pos, int FFT_size)
-{
-  if (pos.size() < 2)
-    return;
 
-  int sym = 0;
-  bool flag = true;
-
-  while (flag)
-  {
-    for (int i = 0; i < pos.size() - 1; ++i)
-    {
-      int left_index = pos[i] + sym * FFT_size;
-      int right_index = pos[i + 1] + sym * FFT_size;
-
-      if (left_index >= H.size() || right_index >= H.size())
-      {
-        flag = false;
-        break;
-      }
-
-      std::complex<double> left_point = H[left_index];
-      std::complex<double> right_point = H[right_index];
-
-      for (int idx = left_index + 1; idx < right_index; ++idx)
-      {
-        double coeff = static_cast<double>(idx - left_index) /
-                       static_cast<double>(right_index - left_index);
-
-        H[idx] = left_point + coeff * (right_point - left_point);
-      }
-    }
-
-    ++sym;
-  }
-}
-
-void linear_interpolation2(std::vector<double> &H, const std::vector<int> &pos,
+void linear_interpolation(std::vector<double> &H, const std::vector<int> &pos,
                            int FFT_size)
 {
   if (pos.size() < 2)
@@ -397,9 +279,9 @@ channel_estimation(std::vector<std::complex<double>> &signal,
   /*unwrap phase for correct interpolation (delete phase jump)*/
   unwrap_phase(phi, FFT_size);
 
-  linear_interpolation2(A, pilots_pos, FFT_size);
+  linear_interpolation(A, pilots_pos, FFT_size);
 
-  linear_interpolation2(phi, pilots_pos, FFT_size);
+  linear_interpolation(phi, pilots_pos, FFT_size);
 
   /*build estimation from amplitude and phase*/
   for (int i = 0; i < A.size(); ++i)
@@ -442,7 +324,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
       }
 
       /*extract symbols with data only*/
-      if (grid[i] == data && std::abs(ofdm_symbols[i + k * grid.size()]) > 1e-12)
+      if (grid[i] == data && std::abs(ofdm_symbols[i + k * grid.size()]) > 0.5)
       {
         clear_symbols.push_back(ofdm_symbols[i + k * grid.size()]);
       }
@@ -516,48 +398,41 @@ ZC_corr(const std::vector<std::complex<double>>& samples,
 {
     std::vector<double> norm_corr;
 
-    const size_t N = samples.size();
-    const size_t M = zc.size();
+    const int N = samples.size();
+    const int M = zc.size();
 
-    if (M == 0 || N < M)
-        return norm_corr;
-
-    const size_t num_positions = N - M + 1;
+    const int num_positions = N - M + 1;
     norm_corr.reserve(num_positions);
 
-    /* energy of ZC sequence */
+    /*ZC sequence energy*/
     double B = 0.0;
-    for (size_t k = 0; k < M; ++k)
+    for (int k = 0; k < M; ++k)
         B += std::norm(zc[k]);
 
-    /* energy of first received window */
+    /*first window energy*/
     double A = 0.0;
-    for (size_t k = 0; k < M; ++k)
+    for (int k = 0; k < M; ++k)
         A += std::norm(samples[k]);
 
-    /* full correlation for first window */
-    std::complex<double> corr = 0.0;
-    for (size_t k = 0; k < M; ++k)
+    /*first window correlation*/
+    std::complex<double> corr = 0;
+    for (int k = 0; k < M; ++k)
         corr += samples[k] * std::conj(zc[k]);
 
-    double denom = std::sqrt(A * B);
-    norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
+    double coeff = std::sqrt(A * B);
+    norm_corr.push_back(coeff > 0 ? std::abs(corr) / coeff : 0);
 
-    /*
-      For next positions:
-      - update A recursively as sliding window energy
-      - recompute corr for new window
-    */
-    for (size_t n = 1; n < num_positions; ++n)
+    /**/
+    for (int n = 1; n < num_positions; ++n)
     {
         A = A - std::norm(samples[n - 1]) + std::norm(samples[n + M - 1]);
 
         corr = 0.0;
-        for (size_t k = 0; k < M; ++k)
+        for (int k = 0; k < M; ++k)
             corr += samples[n + k] * std::conj(zc[k]);
 
-        denom = std::sqrt(A * B);
-        norm_corr.push_back(denom > 0.0 ? std::abs(corr) / denom : 0.0);
+        coeff = std::sqrt(A * B);
+        norm_corr.push_back(coeff > 0 ? std::abs(corr) / coeff : 0);
     }
 
     return norm_corr;

@@ -11,6 +11,13 @@
 #include "imgui.h"
 #include "implot.h"
 
+/*
+  enum for creating and work with OFDM grid (template for create OFDM symbols)
+
+  grid[i] == 0 -> position for guard zero
+  grid[i] == 1 -> position of data
+  grid[i] == pilot -> position for pilot
+*/
 enum cell_type
 {
   guard,
@@ -18,97 +25,76 @@ enum cell_type
   pilot
 };
 
+/*Tx config structure. This parameters using in TX thread and GUI thread for drawing plots*/
 struct tx_cfg
 {
-  bool run; // for stop work
-  int bitrate;
+  bool run;      // for stop work
+  bool DEBUG_MODE;  // START/STOP debug mode (in CLI)
+
   int mod_order; // 2-BPSK, 4-QPSK, 16-QAM16
-  int sps;       // samples per symbol
-  int IR_type;   // 0-Rectangle, 1-Raised-Cosine
-  int OFDM;      // 0 - OFDM 0FF, 1 - OFDM ON
   int FFT_size;  // subcarriers count
   int CP_size;   // Cyclic prefix size
-  int count_OFDM_symb;
-  int count_bits;
-  int buff_size;
-  int pilots_count;
-  int guard_size;
-  bool DEBUG_MODE;
-  int seed = 10;
+  int pilots_count; // cout of pilots in one ofdm symbol
+  int guard_size;   // count of guard symbols in one ofdm symbols (from each side)
 
-  std::vector<uint8_t> bits;
-  std::vector<uint8_t> post_conv_coding;
-  std::vector<uint8_t> post_shuffuling;
-  std::vector<std::complex<double>> symbols;
-  std::vector<std::complex<double>> ofdm_symbols;
-  std::vector<std::complex<double>> ofdm_symbols_cp;
-  std::vector<std::complex<double>> zc;
+  std::vector<std::complex<double>> zc; // Zadov-Chu sequence
+  std::vector<cell_type> grid;          // OFDM grid (position guard zeros, pilots and data)
 
-  std::vector<std::complex<double>> ofdm_signal;
+  std::string message;  // tx message
 
-  std::complex<double> pilot = {1, 1};
+  std::vector<uint8_t> bits;  // message in bits
+  std::vector<uint8_t> post_conv_coding;  // bits after convolution coding
+  std::vector<uint8_t> post_shuffuling;   // bits post shuffuling
 
-  std::vector<std::complex<int16_t>> tx_samples;
-  std::vector<cell_type> grid;
+  std::vector<std::complex<double>> symbols;  // M-PSK/M-QAM symbols
 
-  std::string message;
+  std::vector<std::complex<double>> ofdm_symbols; // OFDM symbols (with pilots, guard interval)
+  std::vector<std::complex<double>> ofdm_signal;      // OFDM symbols in frequency domain
+  std::vector<std::complex<double>> ofdm_symbols_cp;  // final OFDM signal with CP
+
+  std::complex<double> pilot = {1, 1};                // pilot value
+
+
 };
 
+/*Rx config structure. This parameters using in RX thread and GUI thread for drawing plots*/
 struct rx_cfg
 {
-  bool run;
+  bool run;       // for stop programm
+  bool DEBUG_MODE = false;    // START/STOP debug mode
 
   int mod_order; // 2-BPSK, 4-QPSK, 16-QAM16
-  int sps;       // samples per symbol
-  int IR_type;   // 0-Rectangle, 1-Raised-Cosine
-  int OFDM;      // 0 - OFDM 0FF, 1 - OFDM ON
+
   int FFT_size;  // subcarriers count
   int CP_size;   // Cyclic prefix size
-  int count_OFDM_symb;
-  double BER;
+  int pilots_count;   // count of pilots in one OFDM symbol
+  int guard_size;     // count of guard zeros in one OFDM symbol
 
-  // gardner params
-  double gardner_BnTs;
-  double gardner_Kp;
+  double BER;         // Bit Error Rate
 
-  // costas params
-  double costas_Kp;
-  double costas_BnTs;
+  std::complex<double> pilot_value; // pilot value
 
-  int pilots_count;
-  int guard_size;
+  std::vector<cell_type> grid;      // OFDM grid (positions of guard zeros, data, pilots)
+  std::vector<std::complex<double>> zc;       // Zadov-Chu sequence
 
-  bool DEBUG_MODE = false;
-
-  int seed = 10;
-
-  std::complex<double> pilot_value;
-
-  // buffers
   std::vector<std::complex<double>> rx_samples;
-  std::vector<std::complex<double>> mf_samples_out;
-  std::vector<std::complex<double>> raw_symbols;
-  std::vector<double> CP_corr;
-  std::pair<std::vector<std::complex<double>>, std::vector<double>> spectrum;
-  std::pair<std::vector<std::complex<double>>, std::vector<double>>
-      CFO_spectrum;
-  std::pair<std::vector<std::complex<double>>, std::vector<double>>
-      post_CFO_spectrum;
-  std::vector<std::complex<double>> post_cfo_signal;
-  std::pair<std::vector<std::complex<double>>, std::vector<double>>
-      post_fine_CFO_spectrum;
-  std::vector<std::complex<double>> post_costas;
 
-  std::vector<int> CP_peaks;
-  std::vector<std::complex<double>> ofdm_symbols;
-  std::vector<std::complex<double>> freq_domain;
-  std::vector<std::complex<double>> estimation;
-  std::string message;
-  std::vector<uint8_t> bits;
-  std::vector<cell_type> grid;
-  std::vector<std::complex<double>> zc;
-  std::vector<std::complex<double>> cut_samples;
-  std::vector<double> zc_corr;
+  std::vector<double> zc_corr;      // PSS correlation for frame sync
+  std::vector<double> CP_corr;      // CP correlation for symbol sync
+  std::vector<int> CP_peaks;        // CP peaks (start index of ofdm symbols)
+
+  std::vector<std::complex<double>> cut_samples;    // samples post FRAME sync (without PSS)
+
+  std::vector<std::complex<double>> ofdm_symbols;   // samples without CP 
+  std::vector<std::complex<double>> estimation;     // channel estimation (with help pilots)
+
+  std::vector<std::complex<double>> freq_domain;    // symbols in frequency domain
+
+  std::vector<uint8_t> bits;  
+
+  std::string message;     
+
 };
 
+/*GUI thread. This thread drawing GUI with plots and settings for model*/
 void run_gui(tx_cfg &tx_config, rx_cfg &rx_config);

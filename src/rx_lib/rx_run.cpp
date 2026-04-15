@@ -8,10 +8,9 @@
 #include "../../include/find_peaks.hpp"
 #include "../../include/rx_lib.hpp"
 #include "../../include/tx_lib.hpp"
-
+#include "../../include/channel_lib.hpp"
 void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 {
-
   /*generate ZC-sequence*/
   std::vector<std::complex<double>> tmp_zc = ZC_gen(25, config.FFT_size);
 
@@ -19,13 +18,15 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
   batch_ifft(tmp_zc, config.zc, config.FFT_size, config.CP_size);
 
   /*create ofdm grid*/
-  config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count,
-                                 config.guard_size);
+  config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count,config.guard_size);
+
+  const double SNR = 25;
 
   while (config.run)
   {
     config.rx_samples = tx_config.ofdm_symbols_cp;
 
+    AWGN(config.rx_samples, SNR, config.FFT_size, config.CP_size);
 
     if (config.rx_samples.size() == 0)
       continue;
@@ -71,9 +72,7 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     for(auto& el : config.CP_peaks){
       el -= 1;
     }
-  
-    /*estimate coarse frequency offset with help correlation*/
-    // CFO_correction(config.cut_samples, config.CP_peaks, config.CP_corr, config.CP_size, config.FFT_size);
+
 
     /*delete CP*/
     config.ofdm_symbols = delete_CP(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size);
@@ -212,7 +211,7 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 
     }
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+  // std::this_thread::sleep_for(std::chrono::seconds(1));
 
   }
 }

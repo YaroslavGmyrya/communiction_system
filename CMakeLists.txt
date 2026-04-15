@@ -90,6 +90,8 @@ add_library(CORE SHARED
     src/rx_lib/OFDM_rx.cpp
     src/rx_lib/rx_run.cpp
 
+    src/channel_lib/AWGN.cpp
+
     visualization/ImGUI_interface.cpp
 )
 

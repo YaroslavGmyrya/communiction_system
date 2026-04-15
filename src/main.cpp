@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
   tx_config.IR_type = 0;
   // tx_config.tx_samples.resize(sdr_config.buff_size);
   tx_config.OFDM = 1;
-  tx_config.FFT_size = 64;
-  tx_config.CP_size = 8;
+  tx_config.FFT_size = 128;
+  tx_config.CP_size = 16;
   tx_config.count_OFDM_symb = 10;
   tx_config.count_bits = 1000;
   tx_config.pilot = {1, 1};
@@ -45,8 +45,8 @@ int main(int argc, char *argv[])
   rx_config.sps = 10;
   // rx_config.rx_samples.resize(sdr_config.buff_size);
   rx_config.OFDM = 0;
-  rx_config.FFT_size = 64;
-  rx_config.CP_size = 8;
+  rx_config.FFT_size = 128;
+  rx_config.CP_size = 16;
   rx_config.pilot_value = {1, 1};
   rx_config.pilots_count = 8;
   rx_config.guard_size = 3;
