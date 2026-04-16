@@ -8,7 +8,6 @@
 
 using sample = std::complex<double>;
 
-
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
                     const int FFT_size, const int CP_size)
@@ -78,7 +77,6 @@ OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
 
   return norm_corr;
 }
-
 
 void CFO_correction(std::vector<std::complex<double>> &samples,
                     const std::vector<int> &peaks,
@@ -201,9 +199,8 @@ void unwrap_phase(std::vector<double> &phase, int FFT_size)
   }
 }
 
-
 void linear_interpolation(std::vector<double> &H, const std::vector<int> &pos,
-                           int FFT_size)
+                          int FFT_size)
 {
   if (pos.size() < 2)
     return;
@@ -324,7 +321,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
       }
 
       /*extract symbols with data only*/
-      if (grid[i] == data && std::abs(ofdm_symbols[i + k * grid.size()]) > 0.5)
+      if (grid[i] == data)
       {
         clear_symbols.push_back(ofdm_symbols[i + k * grid.size()]);
       }
@@ -344,13 +341,13 @@ void batch_fft(std::vector<std::complex<double>> &data,
 
   if (data.size() == 0)
   {
-    spdlog::error("[OFDM.cpp:batch_ifft]: The data size is zero!");
+    spdlog::error("[OFDM.cpp:batch_fft]: The data size is zero!");
     return;
   }
 
   if (FFT_size <= 0)
   {
-    spdlog::error("[OFDM.cpp:batch_ifft]: The FFT_size size is invalid!");
+    spdlog::error("[OFDM.cpp:batch_fft]: The FFT_size size is invalid!");
     return;
   }
 
@@ -393,49 +390,49 @@ void batch_fft(std::vector<std::complex<double>> &data,
 }
 
 std::vector<double>
-ZC_corr(const std::vector<std::complex<double>>& samples,
-                  const std::vector<std::complex<double>>& zc)
+ZC_corr(const std::vector<std::complex<double>> &samples,
+        const std::vector<std::complex<double>> &zc)
 {
-    std::vector<double> norm_corr;
+  std::vector<double> norm_corr;
 
-    const int N = samples.size();
-    const int M = zc.size();
+  const int N = samples.size();
+  const int M = zc.size();
 
-    const int num_positions = N - M + 1;
-    norm_corr.reserve(num_positions);
+  const int num_positions = N - M + 1;
+  norm_corr.reserve(num_positions);
 
-    /*ZC sequence energy*/
-    double B = 0.0;
+  /*ZC sequence energy*/
+  double B = 0.0;
+  for (int k = 0; k < M; ++k)
+    B += std::norm(zc[k]);
+
+  /*first window energy*/
+  double A = 0.0;
+  for (int k = 0; k < M; ++k)
+    A += std::norm(samples[k]);
+
+  /*first window correlation*/
+  std::complex<double> corr = 0;
+  for (int k = 0; k < M; ++k)
+    corr += samples[k] * std::conj(zc[k]);
+
+  double coeff = std::sqrt(A * B);
+  norm_corr.push_back(coeff > 0 ? std::abs(corr) / coeff : 0);
+
+  /**/
+  for (int n = 1; n < num_positions; ++n)
+  {
+    A = A - std::norm(samples[n - 1]) + std::norm(samples[n + M - 1]);
+
+    corr = 0.0;
     for (int k = 0; k < M; ++k)
-        B += std::norm(zc[k]);
+      corr += samples[n + k] * std::conj(zc[k]);
 
-    /*first window energy*/
-    double A = 0.0;
-    for (int k = 0; k < M; ++k)
-        A += std::norm(samples[k]);
-
-    /*first window correlation*/
-    std::complex<double> corr = 0;
-    for (int k = 0; k < M; ++k)
-        corr += samples[k] * std::conj(zc[k]);
-
-    double coeff = std::sqrt(A * B);
+    coeff = std::sqrt(A * B);
     norm_corr.push_back(coeff > 0 ? std::abs(corr) / coeff : 0);
+  }
 
-    /**/
-    for (int n = 1; n < num_positions; ++n)
-    {
-        A = A - std::norm(samples[n - 1]) + std::norm(samples[n + M - 1]);
-
-        corr = 0.0;
-        for (int k = 0; k < M; ++k)
-            corr += samples[n + k] * std::conj(zc[k]);
-
-        coeff = std::sqrt(A * B);
-        norm_corr.push_back(coeff > 0 ? std::abs(corr) / coeff : 0);
-    }
-
-    return norm_corr;
+  return norm_corr;
 }
 
 void CFO_correction(std::vector<sample> &samples, const std::vector<sample> &corr_function, const std::vector<int> &peaks, const double Ts)
@@ -453,20 +450,22 @@ void CFO_correction(std::vector<sample> &samples, const std::vector<sample> &cor
   }
 }
 
-double BER(const std::vector<uint8_t>& rx_bits,  const std::vector<uint8_t>& tx_bits){
-  if(rx_bits.size() != tx_bits.size()){
+double BER(const std::vector<uint8_t> &rx_bits, const std::vector<uint8_t> &tx_bits)
+{
+  if (rx_bits.size() != tx_bits.size())
+  {
     spdlog::error("RX_BITS and TX_BITS must be have same size!");
     return -1;
   }
 
   double BER = 0;
 
-  for(int i = 0; i < rx_bits.size(); ++i){
+  for (int i = 0; i < rx_bits.size(); ++i)
+  {
     BER += rx_bits[i] == tx_bits[i] ? 0 : 1;
   }
 
   BER /= rx_bits.size();
 
   return BER;
-
 }

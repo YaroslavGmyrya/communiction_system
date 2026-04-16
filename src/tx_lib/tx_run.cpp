@@ -9,7 +9,7 @@
 void tx_run(tx_cfg &config)
 {
 
-  config.message = "One thing, I don't know why It doesn't even matter how hard you try Keep that in mind, I designed this rhyme to explain in due time All I know time is a valuable thing Watch it fly by as the pendulum swings Watch it count down to the end of the day, the clock ticks life away It's so unreal, didn't look out below Watch the time go right out the window Tryna hold on, d-didn't even know I wasted it all just to watch you go";
+  config.message = "One thing";
   // config.message = "One thing";
 
   const int ZC_ROOT = 25;
@@ -22,8 +22,33 @@ void tx_run(tx_cfg &config)
   while (config.run)
   {
 
+    auto begin = std::chrono::steady_clock::now();
+
+    config.bits.clear();
+
     /*message (word) -> bits*/
-    config.bits = coder(config.message);
+    std::vector<uint8_t> bits;
+    bits = coder(config.message);
+
+    /*bits in one inner symbol*/
+    int bps = static_cast<int>(std::log2(config.mod_order));
+
+    /*bits in one OFDM symbol*/
+    int payload = (config.FFT_size - 2 * config.guard_size - config.pilots_count) * bps;
+
+    /*compute padding (zeros in end of last OFDM symbol)*/
+    config.padding = (payload - (bits.size() % payload)) % payload;
+
+    config.padding -= config.max_padding_bits;
+
+    /*extract bits*/
+    for (int i = config.max_padding_bits - 1; i >= 0; --i)
+    {
+      config.bits.push_back((config.padding >> i) & 1);
+    }
+
+    /*final bits*/
+    config.bits.insert(config.bits.end(), bits.begin(), bits.end());
 
     /*generate ofdm grid*/
     config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count, config.guard_size);
@@ -49,7 +74,13 @@ void tx_run(tx_cfg &config)
     config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.begin(), 5, 0);
     config.ofdm_symbols_cp.insert(config.ofdm_symbols_cp.end(), 5, 0);
 
-    std ::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    auto end = std::chrono::steady_clock::now();
+
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+
+    // std::cout << "The TX time: " << elapsed_ms.count() << " ms\n";
+
+    std ::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     /*================================================= DEBUG INFO =========================================================*/
 
@@ -73,6 +104,10 @@ void tx_run(tx_cfg &config)
       }
 
       std::cout << "\nSIZE: " << config.bits.size() << "\n";
+
+      std::cout << "\n\n";
+
+      std::cout << "PADDING: " << config.padding << "\n";
 
       std::cout << "\n\n";
 
@@ -122,7 +157,7 @@ void tx_run(tx_cfg &config)
       std::cout << "============================= PSS =========================================";
 
       std::cout << "\nTYPE: " << "Zadoff-Chu\n";
-      std::cout << "\ROOT: " << ZC_ROOT << "\n";
+      std::cout << "\nROOT: " << ZC_ROOT << "\n";
 
       std::cout << "VALUE: ";
       for (int i = 0; i < config.zc.size(); ++i)

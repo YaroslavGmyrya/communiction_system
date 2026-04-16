@@ -218,18 +218,19 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
             ImGui::RadioButton("QAM256", &rx_config.mod_order, 256);
             ImGui::RadioButton("QAM1024", &rx_config.mod_order, 1024);
 
-             if (ImGui::Checkbox("DEBUG MODE", &rx_config.DEBUG_MODE))
+            if (ImGui::Checkbox("DEBUG MODE", &rx_config.DEBUG_MODE))
             {
             }
 
             ImGui::SeparatorText("OFDM");
             ImGui::InputInt("FFT size", &rx_config.FFT_size, 1, 128);
             ImGui::InputInt("Cyclic prefix size", &rx_config.CP_size, 1, 128);
-            ImGui::InputInt("Count of pilots", &rx_config.pilots_count, 1,
-                            128);
-            ImGui::SliderInt("Guard interval size (double side)",
-                             &rx_config.guard_size, 2,
-                             rx_config.FFT_size / 3);
+            ImGui::InputInt("Count of pilots", &rx_config.pilots_count, 1, 128);
+            ImGui::SliderInt("Guard interval size (double side)", &rx_config.guard_size, 2, rx_config.FFT_size / 3);
+
+            ImGui::SeparatorText("Channel");
+
+            ImGui::SliderFloat("SNR", &rx_config.SNR, -100, 100);
 
             ImGui::EndChild();
           }
@@ -237,7 +238,6 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
           ImGui::SameLine();
 
           /*========================================= RX PLOTS ====================================================*/
-
 
           if (ImGui::BeginChild("RX_Plots", ImVec2(0, 0), true))
           {
@@ -290,8 +290,8 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
             {
               ImPlot::SetupAxes("I", "Q");
               ImPlot::PlotScatterG("Points", get_points<double>,
-                                &rx_config.raw_symbols,
-                                rx_config.raw_symbols.size());
+                                   &rx_config.raw_symbols,
+                                   rx_config.raw_symbols.size());
               ImPlot::EndPlot();
             }
 
