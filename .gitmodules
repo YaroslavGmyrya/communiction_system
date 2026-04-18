@@ -1,7 +1,4 @@
-[submodule "third_party/implot"]
-	path = third_party/implot
-	url = https://github.com/epezent/implot.git
-[submodule "third_party/imgui"]
-	path = third_party/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = docking
+[submodule "third_party"]
+	path = third_party
+	url = https://github.com/YaroslavGmyrya/Dear-ImGui
+	branch = dep_only
