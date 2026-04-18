@@ -102,6 +102,8 @@ elseif(UNIX)
         ${IMPLOT}
         third_party/imgui/backends/imgui_impl_sdl2.cpp
         third_party/imgui/backends/imgui_impl_opengl3.cpp
+        visualization/ImGUI_interface.cpp
+
     )
 
     target_include_directories(CORE PUBLIC
