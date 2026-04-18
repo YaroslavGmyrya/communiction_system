@@ -11,4 +11,5 @@
 !*.cmake
 !*.sh
 !*.md
+!*.mm
 !/third_party
