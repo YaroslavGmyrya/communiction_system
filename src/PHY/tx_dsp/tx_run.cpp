@@ -3,11 +3,13 @@
 #include <chrono>
 #include <thread>
 
-#include "../../include/ImGUI_interface.hpp"
-#include "../../include/tx_lib.hpp"
+#include "../../../include/GUI.hpp"
+#include "../../../include/PHY/tx_dsp.hpp"
 
 void tx_run(tx_cfg &config)
 {
+
+  const int SEED = 10;
 
   config.message = "One thing";
   // config.message = "One thing";
@@ -18,6 +20,8 @@ void tx_run(tx_cfg &config)
 
   /*generate ZC*/
   config.zc = ZC_gen(ZC_ROOT, config.FFT_size);
+
+  // std::vector<uint8_t> shuffuling_bits;
 
   while (config.run)
   {
@@ -49,6 +53,10 @@ void tx_run(tx_cfg &config)
 
     /*final bits*/
     config.bits.insert(config.bits.end(), bits.begin(), bits.end());
+
+    // shuffuling_bits = shuffuling(bits, SEED);
+
+    // std::cout << shuffuling_bits.size() << "\n\n";
 
     /*generate ofdm grid*/
     config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count, config.guard_size);

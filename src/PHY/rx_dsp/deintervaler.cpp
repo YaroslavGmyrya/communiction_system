@@ -1,5 +1,5 @@
-#include "../../include/rx_lib.hpp"
-#include "../../include/tx_lib.hpp"
+#include "../../../include/PHY/rx_dsp.hpp"
+#include "../../../include/PHY/tx_dsp.hpp"
 #include <cstdint>
 #include <random>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -13,10 +13,12 @@
  * @param[in] seed seed for determanating
  * @return New order for elements
  **/
-std::vector<int> order_gen_rx(const int N, const int seed) {
+std::vector<int> order_gen_rx(const int N, const int seed)
+{
   std::vector<int> order(N);
 
-  for (int i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i)
+  {
     order[i] = i;
   }
 
@@ -28,8 +30,10 @@ std::vector<int> order_gen_rx(const int N, const int seed) {
 }
 
 std::vector<uint8_t> deintervale(const std::vector<uint8_t> &bits,
-                                 const int seed) {
-  if (bits.size() <= 1) {
+                                 const int seed)
+{
+  if (bits.size() <= 1)
+  {
     spdlog::error("[deintervaler.cpp]: Bits size must be more then 1!");
     return {};
   }
@@ -41,7 +45,8 @@ std::vector<uint8_t> deintervale(const std::vector<uint8_t> &bits,
   result.reserve(bits.size());
 
   // shuffle
-  for (int i = 0; i < bits.size(); ++i) {
+  for (int i = 0; i < bits.size(); ++i)
+  {
     result[i] = bits[order[i]];
   }
 

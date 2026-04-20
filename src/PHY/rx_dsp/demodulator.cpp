@@ -1,10 +1,12 @@
-#include "../../include/tx_lib.hpp"
+#include "../../include/PHY/tx_dsp.hpp"
 #include <cstdint>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
-std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &symbols) {
-  if (symbols.size() == 0) {
+std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &symbols)
+{
+  if (symbols.size() == 0)
+  {
     spdlog::error("Empty bit sequence!");
     return {};
   }
@@ -14,7 +16,8 @@ std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &symbols) {
   uint8_t b0;
   uint8_t b1;
 
-  for (int i = 0; i < symbols.size(); ++i) {
+  for (int i = 0; i < symbols.size(); ++i)
+  {
     double I = symbols[i].real();
     double Q = symbols[i].imag();
 
@@ -28,15 +31,18 @@ std::vector<uint8_t> QPSK_demodulation(const std::vector<sample> &symbols) {
   return bits;
 }
 
-std::vector<uint8_t> BPSK_demodulator(const std::vector<sample> &symbols) {
-  if (symbols.size() == 0) {
+std::vector<uint8_t> BPSK_demodulator(const std::vector<sample> &symbols)
+{
+  if (symbols.size() == 0)
+  {
     spdlog::error("Empty bit sequence!");
     return {};
   }
 
   std::vector<uint8_t> bits;
 
-  for (int i = 0; i < symbols.size(); ++i) {
+  for (int i = 0; i < symbols.size(); ++i)
+  {
     double I = symbols[i].real();
     double Q = symbols[i].imag();
 

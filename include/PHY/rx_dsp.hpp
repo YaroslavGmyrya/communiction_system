@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "ImGUI_interface.hpp"
+#include "../structures.hpp"
 
 using sample = std::complex<double>;
 
@@ -88,7 +88,6 @@ std::vector<std::complex<double>>
 delete_CP(const std::vector<std::complex<double>> &samples,
           const std::vector<int> &peaks, const int CP_size, const int FFT_size);
 
-
 void CFO_correction(std::vector<std::complex<double>> &samples,
                     const std::vector<int> &peaks,
                     const std::vector<double> &correlation, int CP_size,
@@ -103,10 +102,9 @@ void CFO_correction(std::vector<std::complex<double>> &samples,
  * @param[in] gi_size count of guard zeros in one OFDM symbol
 
  * @return OFDM grid
- **/                  
+ **/
 std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
                                         int gi_size);
-
 
 /**
  * @file OFDM_rx.cpp
@@ -115,10 +113,8 @@ std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
  * @param[in] grid OFDM grid
 
  * @return Vector with pilots pos
- **/                                              
+ **/
 std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid);
-
-
 
 /**
  * @file OFDM_rx.cpp
@@ -129,13 +125,11 @@ std::vector<int> get_pilots_pos(const std::vector<cell_type> &grid);
  * @param[in] FFT_size OFDM symbol size
 
  * @return Vector with pilots pos
- **/     
+ **/
 void linear_interpolation(std::vector<std::complex<double>> &H,
                           const std::vector<int> &pos, int FFT_size);
 
-
 void unwrap_phase(std::vector<double> &phase, int FFT_size);
-
 
 /**
  * @file OFDM_rx.cpp
@@ -146,13 +140,12 @@ void unwrap_phase(std::vector<double> &phase, int FFT_size);
  * @param[in] FFT_size OFDM symbol size
 
  * @return Vector with pilots pos
- **/     
+ **/
 std::vector<std::complex<double>>
 channel_estimation(std::vector<std::complex<double>> &signal,
                    const std::vector<cell_type> &grid,
                    std::complex<double> pilot_value);
 
-
 /**
  * @file OFDM_rx.cpp
  * @brief Simple linear interpolation. Used for interpolation channel estimation between pilots
@@ -162,10 +155,9 @@ channel_estimation(std::vector<std::complex<double>> &signal,
  * @param[in] FFT_size OFDM symbol size
 
  * @return Vector with pilots pos
- **/     
+ **/
 void channel_equalization(std::vector<std::complex<double>> &symbols,
                           const std::vector<std::complex<double>> &estimation);
-
 
 /**
  * @file OFDM_rx.cpp
@@ -175,12 +167,10 @@ void channel_equalization(std::vector<std::complex<double>> &symbols,
  * @param[in] ZC Zadov-Chu sequence
 
  * @return BER
- **/  
+ **/
 std::vector<std::complex<double>>
 extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
                       const std::vector<cell_type> &grid, const int padding);
-
-
 
 /**
  * @file OFDM_rx.cpp
@@ -190,7 +180,7 @@ extract_inner_symbols(const std::vector<std::complex<double>> &ofdm_symbols,
  * @param[in] ZC Zadov-Chu sequence
 
  * @return BER
- **/  
+ **/
 std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples, const std::vector<std::complex<double>> &ZC);
 
 /**
@@ -201,17 +191,16 @@ std::vector<double> ZC_corr(const std::vector<std::complex<double>> &samples, co
  * @param[in] tx_bits
 
  * @return BER
- **/     
-double BER(const std::vector<uint8_t>& rx_bits,  const std::vector<uint8_t>& tx_bits);
-
+ **/
+double BER(const std::vector<uint8_t> &rx_bits, const std::vector<uint8_t> &tx_bits);
 
 /**
  * @file OFDM_rx.cpp
  * @brief Compute BER
  *
- * @param[in] config rx config 
+ * @param[in] config rx config
  * @param[in] tx_config tx config
 
  * @return RX side DSP
- **/  
+ **/
 void rx_run(rx_cfg &config, const tx_cfg &tx_config);

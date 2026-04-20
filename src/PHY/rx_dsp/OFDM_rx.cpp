@@ -4,7 +4,7 @@
 #include <fftw3.h>
 #include <spdlog/spdlog.h>
 
-#include "../../include/ImGUI_interface.hpp"
+#include "../../include/GUI.hpp"
 
 using sample = std::complex<double>;
 

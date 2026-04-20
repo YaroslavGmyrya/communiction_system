@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <vector>
 
-#include "../include/ImGUI_interface.hpp"
+#include "../include/GUI.hpp"
 
 template <typename T>
 ImPlotPoint get_value(int idx, void *user_data)

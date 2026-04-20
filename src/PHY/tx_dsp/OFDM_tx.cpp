@@ -4,7 +4,8 @@
 #include <fftw3.h>
 #include <spdlog/spdlog.h>
 
-#include "../../include/ImGUI_interface.hpp"
+#include "../../../include/structures.hpp"
+#include "../../../include/GUI.hpp"
 
 std::vector<cell_type> create_ofdm_grid(const int FFT_size,
                                         const int pilots_count,

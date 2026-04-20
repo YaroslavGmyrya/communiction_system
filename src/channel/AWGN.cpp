@@ -1,11 +1,13 @@
 #include <random>
 
-#include "../../include/channel_lib.hpp"
+#include "../../../include/channel.hpp"
 
-void AWGN(std::vector<sample>& samples, double SNR, const int FFT_size, const int CP_size) {
+void AWGN(std::vector<sample> &samples, double SNR, const int FFT_size, const int CP_size)
+{
     double mean_Es = 0;
 
-    for (int i = CP_size; i < CP_size + FFT_size; ++i) {
+    for (int i = CP_size; i < CP_size + FFT_size; ++i)
+    {
         mean_Es += samples[i].real() * samples[i].real() + samples[i].imag() * samples[i].imag();
     }
 
@@ -19,7 +21,8 @@ void AWGN(std::vector<sample>& samples, double SNR, const int FFT_size, const in
     std::mt19937 gen(rd());
     std::normal_distribution<double> dist(0, sigma);
 
-    for (size_t i = 0; i < samples.size(); ++i) {
+    for (size_t i = 0; i < samples.size(); ++i)
+    {
         samples[i] += std::complex<double>(dist(gen), dist(gen));
     }
 }

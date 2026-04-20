@@ -36,17 +36,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 
 add_library(CORE SHARED
-    src/tx_lib/modulator.cpp
-    src/tx_lib/preparing_bits.cpp
-    src/tx_lib/tx_run.cpp
-    src/tx_lib/OFDM_tx.cpp
-    src/rx_lib/decoder.cpp
-    src/rx_lib/deintervaler.cpp
-    src/rx_lib/demodulator.cpp
-    src/rx_lib/find_peaks.cpp
-    src/rx_lib/OFDM_rx.cpp
-    src/rx_lib/rx_run.cpp
-    src/channel_lib/AWGN.cpp
+    src/PHY/tx_dsp/modulator.cpp
+    src/PHY/tx_dsp/preparing_bits.cpp
+    src/PHY/tx_dsp/tx_run.cpp
+    src/PHY/tx_dsp/OFDM_tx.cpp
+    src/PHY/rx_dsp/decoder.cpp
+    src/PHY/rx_dsp/deintervaler.cpp
+    src/PHY/rx_dsp/demodulator.cpp
+    src/PHY/rx_dsp/find_peaks.cpp
+    src/PHY/rx_dsp/OFDM_rx.cpp
+    src/PHY/rx_dsp/rx_run.cpp
+    src/channel/AWGN.cpp
 )
 
 target_include_directories(CORE PUBLIC
@@ -69,7 +69,7 @@ if(APPLE)
         third_party/backend/glfw_adapter.mm
         third_party/imgui/backends/imgui_impl_glfw.cpp
         third_party/imgui/backends/imgui_impl_metal.mm
-        visualization/macOS.mm
+        src/macOS.mm
     )
 
     target_include_directories(CORE PUBLIC
@@ -102,11 +102,12 @@ elseif(UNIX)
         ${IMPLOT}
         third_party/imgui/backends/imgui_impl_sdl2.cpp
         third_party/imgui/backends/imgui_impl_opengl3.cpp
-        visualization/ImGUI_interface.cpp
+        src/GUI/Linux.cpp
     )
 
     target_include_directories(CORE PUBLIC
         ${INCLUDE_DIR}
+        ${INCLUDE_DIR}/GUI
         ${PROJECT_SOURCE_DIR}/third_party/imgui
         ${PROJECT_SOURCE_DIR}/third_party/imgui/backends
         ${PROJECT_SOURCE_DIR}/third_party/implot

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "../include/ImGUI_interface.hpp"
+#include "../structures.hpp"
 
 using sample = std::complex<double>;
 
@@ -120,9 +120,8 @@ std::vector<sample> QAM1024(const std::vector<uint8_t> &bits);
 std::vector<sample> modulation(const std::vector<uint8_t> &bits,
                                const int &order);
 
-
 /**
- * @brief Create OFDM grid. She used as template for creating OFDM symbols: M-PSK/M-QAM symbols insert in position, 
+ * @brief Create OFDM grid. She used as template for creating OFDM symbols: M-PSK/M-QAM symbols insert in position,
  * which have type "data". Template have N zeros from each side and N pilots, which are distributed evely (guranteed, that
  * pilots located on the sides)
  *
@@ -133,7 +132,6 @@ std::vector<sample> modulation(const std::vector<uint8_t> &bits,
  */
 std::vector<cell_type> create_ofdm_grid(int FFT_size, int pilots_count,
                                         int gi_size);
-
 
 /**
  * @brief Fill OFDM grid with zeros, pilots, data
@@ -148,9 +146,8 @@ create_ofdm_signal(const std::vector<std::complex<double>> &symbols,
                    const std::vector<cell_type> &grid,
                    std::complex<double> pilot_value);
 
-
 /**
- * @brief Add Cyclic Prefix. This function copy in start OFDM symbol N samples from end. In RX side CP using for 
+ * @brief Add Cyclic Prefix. This function copy in start OFDM symbol N samples from end. In RX side CP using for
  * symbol sync (search start ofdm symbols with help correlation), frequency sync (search Coarse Frequency Offset with help
  * correlation). Also CP using for suppression ISI
  *
@@ -180,7 +177,7 @@ void batch_ifft(std::vector<std::complex<double>> &data,
                 const int CP_size);
 
 /**
- * @brief Generate Zadov-Chu sequence for frame sync. This is special sequence, which have good correlation properties and 
+ * @brief Generate Zadov-Chu sequence for frame sync. This is special sequence, which have good correlation properties and
  * have noise resistance. Sequence have size 63 samples, but padding with zeros if FFT_size > 63. ZC have size equal OFDM symbol size.
  *
  * @param[in] root Zadov-Chu parameters.

@@ -3,9 +3,9 @@
 #include <iostream>
 #include <thread>
 
-#include "../include/ImGUI_interface.hpp"
-#include "../include/rx_lib.hpp"
-#include "../include/tx_lib.hpp"
+#include "../include/GUI.hpp"
+#include "../include/PHY/rx_dsp.hpp"
+#include "../include/PHY/tx_dsp.hpp"
 
 int main(int argc, char *argv[])
 {

@@ -4,13 +4,15 @@
 #include <chrono>
 #include <cstdint>
 
-#include "../../include/ImGUI_interface.hpp"
-#include "../../include/find_peaks.hpp"
-#include "../../include/rx_lib.hpp"
-#include "../../include/tx_lib.hpp"
-#include "../../include/channel_lib.hpp"
+#include "../../include/GUI.hpp"
+#include "../../include/PHY/find_peaks.hpp"
+#include "../../../include/PHY/rx_dsp.hpp"
+#include "../../../include/PHY/tx_dsp.hpp"
+#include "../../include/channel.hpp"
+
 void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 {
+  const int SEED = 10;
 
   /*generate ZC-sequence*/
   std::vector<std::complex<double>> tmp_zc = ZC_gen(25, config.FFT_size);
@@ -116,6 +118,9 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
       config.bits.push_back(bits[i]);
     }
 
+    /*deshuffuling bits*/
+    // config.bits = deintervale(config.bits, SEED);
+
     // std::cout << "RX: " << config.bits.size() << "\t" << "TX: " << tx_config.bits.size() << "\n\n";
 
     // for (auto el : config.bits)
@@ -129,9 +134,6 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
     // std::cout << "\n\n";
 
     config.BER = BER(config.bits, tx_config.bits);
-
-    /*deshuffuling bits*/
-    // config.bits = deintervale(config.bits, config.seed);
 
     /*bits -> message*/
     // config.message = decoder(config.bits);

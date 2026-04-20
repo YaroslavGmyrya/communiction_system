@@ -1,4 +1,4 @@
-#include "../../include/rx_lib.hpp"
+#include "../../include/PHY/rx_dsp.hpp"
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
@@ -11,18 +11,22 @@
  * @return String
  **/
 
-std::string decoder(const std::vector<uint8_t> &bits) {
-  if (bits.size() % 8 != 0) {
+std::string decoder(const std::vector<uint8_t> &bits)
+{
+  if (bits.size() % 8 != 0)
+  {
     spdlog::error("[decoder]: Bits size must be % 8!");
     return {};
   }
 
   std::string word;
 
-  for (int i = 0; i < bits.size(); i += 8) {
+  for (int i = 0; i < bits.size(); i += 8)
+  {
     uint8_t byte = 0;
 
-    for (int j = 0; j < 8; ++j) {
+    for (int j = 0; j < 8; ++j)
+    {
       byte = (byte << 1) | bits[i + j];
     }
 
