@@ -47,6 +47,8 @@ add_library(CORE SHARED
     src/PHY/rx_dsp/OFDM_rx.cpp
     src/PHY/rx_dsp/rx_run.cpp
     src/channel/AWGN.cpp
+    src/channel/COST207.cpp
+
 )
 
 target_include_directories(CORE PUBLIC

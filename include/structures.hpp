@@ -65,6 +65,13 @@ struct rx_cfg
     int guard_size;   // count of guard zeros in one OFDM symbol
     float SNR;        // Signal Noise Ration on RX side
 
+    int channel_type;                                 // 0 is AWGN, 1 is COST207
+    std::string profile = "TU50";                     // profile for COST207
+    int sins = 33;                                    // count of sinusoids for generate rays in Jakes model
+    std::vector<std::vector<std::complex<double>>> H; // channel matrix
+    std::vector<double> t;                            // channel timeline
+    std::vector<double> avg_E;                        // avg energy on rays
+
     int max_padding_bits; // how many bits in start of first OFDM symbol contain padding in end of last OFDM symbol
 
     double BER; // Bit Error Rate

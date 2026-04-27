@@ -1,6 +1,9 @@
 #include <random>
+#include <iostream>
 
 #include "../../../include/channel.hpp"
+
+using namespace std::complex_literals;
 
 void AWGN(std::vector<sample> &samples, double SNR, const int FFT_size, const int CP_size)
 {
@@ -25,4 +28,26 @@ void AWGN(std::vector<sample> &samples, double SNR, const int FFT_size, const in
     {
         samples[i] += std::complex<double>(dist(gen), dist(gen));
     }
+}
+
+std::vector<sample> frequency_offset(const std::vector<sample> &samples, double f_offset, double Fs)
+{
+    const std::complex<double> j(0, 1);
+    const double PI = 3.141592653589793;
+
+    std::vector<sample> result(samples.size());
+
+    std::cout << samples.size() << "\t" << result.size() << "\n\n";
+
+    for (int n = 0; n < samples.size(); ++n)
+    {
+        std::cout << samples[n] << " ";
+        // std::cout << n << "\n";
+        // double phase = 2.0 * PI * f_offset * n / Fs;
+        // result[n] = samples[n] * std::exp(j * phase);
+    }
+
+    std::cout << "\n\n";
+
+    return result;
 }

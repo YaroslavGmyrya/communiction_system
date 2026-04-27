@@ -88,7 +88,7 @@ void tx_run(tx_cfg &config)
 
     // std::cout << "The TX time: " << elapsed_ms.count() << " ms\n";
 
-    std ::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std ::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
     /*================================================= DEBUG INFO =========================================================*/
 

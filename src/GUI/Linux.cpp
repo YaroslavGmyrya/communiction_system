@@ -101,6 +101,7 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
   float left_width = 450.0f;
   float plot_height = 250.0f;
   bool running = true;
+  int profile = -1;
 
   while (running)
   {
@@ -231,6 +232,38 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
             ImGui::SeparatorText("Channel");
 
             ImGui::SliderFloat("SNR", &rx_config.SNR, -100, 100);
+            ImGui::RadioButton("AWGN", &rx_config.channel_type, 0);
+            ImGui::RadioButton("COST207", &rx_config.channel_type, 1);
+
+            if (rx_config.channel_type == 1)
+            {
+              ImGui::SeparatorText("COST207 profiles");
+
+              if (ImGui::RadioButton("TU50", &profile, 1))
+              {
+                rx_config.profile = "TU50";
+              }
+              if (ImGui::RadioButton("TU3", &profile, 2))
+              {
+                rx_config.profile = "TU3";
+              }
+
+              if (ImGui::RadioButton("RA130", &profile, 3))
+              {
+                rx_config.profile = "RA130";
+              }
+
+              if (ImGui::RadioButton("HT100", &profile, 4))
+              {
+                rx_config.profile = "HT100";
+              }
+              if (ImGui::RadioButton("EQ50", &profile, 5))
+              {
+                rx_config.profile = "EQ50";
+              }
+
+              ImGui::SliderInt("Count of sinusoids", &rx_config.sins, 1, 128);
+            }
 
             ImGui::EndChild();
           }
@@ -272,6 +305,14 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
               ImPlot::PlotLineG("CP corr", get_value<double>,
                                 &rx_config.CP_corr,
                                 rx_config.CP_corr.size());
+              ImPlot::EndPlot();
+            }
+
+            if (ImPlot::BeginPlot("CHANNEL PROFILE",
+                                  ImVec2(-1, plot_height)))
+            {
+              ImPlot::SetupAxes("delay, s", "E");
+              ImPlot::PlotStems("E", rx_config.t.data(), rx_config.avg_E.data(), rx_config.t.size());
               ImPlot::EndPlot();
             }
 
