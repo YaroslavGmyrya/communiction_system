@@ -1,12 +1,14 @@
 #include <algorithm>
 #include <iostream>
-
+#include <complex>
 #include <fftw3.h>
 #include <spdlog/spdlog.h>
 
 #include "../../include/GUI.hpp"
 
 using sample = std::complex<double>;
+
+using namespace std::complex_literals;
 
 std::vector<double>
 OFDM_corr_receiving(const std::vector<std::complex<double>> &samples,
@@ -110,6 +112,45 @@ void CFO_correction(std::vector<std::complex<double>> &samples,
       samples[peak_idx + k] *=
           std::exp(std::complex<double>(0, -2 * M_PI * eps * k / CP_size));
     }
+  }
+}
+
+void CFO_estimation(std::vector<std::complex<double>> &signal,
+                    const std::vector<int> &peaks,
+                    int CP_size,
+                    int FFT_size, const double Fs)
+{
+  std::complex<double> corr(0, 0);
+
+  if (peaks.size() == 0)
+  {
+    return;
+  }
+
+  for (int i = 0; i < peaks.size(); ++i)
+  {
+    int start = peaks[i];
+    int end = start + FFT_size;
+
+    if (end + CP_size >= signal.size())
+      continue;
+
+    for (int j = 0; j < CP_size; ++j)
+    {
+      corr += signal[start + j] * std::conj(signal[end + j]);
+    }
+  }
+
+  double CFO = -std::arg(corr) / (2 * M_PI / (Fs / FFT_size));
+
+  std::cout << "CFO: " << CFO << "\n\n\n";
+
+  for (int k = 0; k < signal.size(); ++k)
+  {
+    double tmp = static_cast<double>(k) / Fs;
+
+    // signal[i] *= std::exp(std::complex<double>(0.0, -2.0 * M_PI * CFO * static_cast<double>(tmp)));
+    signal[k] *= std::exp(-1i * 2.0 * M_PI * CFO * tmp);
   }
 }
 
@@ -240,7 +281,7 @@ void linear_interpolation(std::vector<double> &H, const std::vector<int> &pos,
 std::vector<std::complex<double>>
 channel_estimation(std::vector<std::complex<double>> &signal,
                    const std::vector<cell_type> &grid,
-                   std::complex<double> pilot_value)
+                   std::complex<double> pilot_value, std::vector<double> &pilots)
 {
   /*get pilots position from ofdm grid*/
   std::vector<int> pilots_pos = get_pilots_pos(grid);
@@ -248,6 +289,8 @@ channel_estimation(std::vector<std::complex<double>> &signal,
   const int FFT_size = grid.size();
 
   const int symbs_count = signal.size() / FFT_size;
+
+  pilots.resize(FFT_size * symbs_count);
 
   /*total estimation*/
   std::vector<std::complex<double>> estimation(FFT_size * symbs_count);
@@ -269,6 +312,8 @@ channel_estimation(std::vector<std::complex<double>> &signal,
 
       /*separate estimation on amplitude and phase*/
       A[pilots_pos[j] + i * FFT_size] = std::abs(cur_estimation);
+      pilots[pilots_pos[j] + i * FFT_size] = std::abs(cur_estimation);
+
       phi[pilots_pos[j] + i * FFT_size] = std::arg(cur_estimation);
     }
   }

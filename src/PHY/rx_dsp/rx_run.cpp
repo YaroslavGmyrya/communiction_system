@@ -28,6 +28,8 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
   while (config.run)
   {
 
+    config.grid = create_ofdm_grid(config.FFT_size, config.pilots_count, config.guard_size);
+
     auto begin = std::chrono::steady_clock::now();
 
     config.rx_samples = tx_config.ofdm_symbols_cp;
@@ -59,23 +61,12 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 
       config.avg_E = get_rays_energy(config.H);
 
-      // for (int i = 0; i < config.H.size(); ++i)
-      // {
-      //   for (int j = 0; j < config.H[0].size(); ++j)
-      //   {
-      //     std::cout << config.H[i][j];
-      //   }
-      // }
-
-      for (int i = 0; i < config.avg_E.size(); ++i)
-      {
-        std::cout << config.avg_E[i] << " ";
-      }
-
-      std::cout << "\n\n";
-
       config.rx_samples = channel_pass(config.rx_samples, config.H);
     }
+
+    /*===================================================== SPECTRUM ============================================================================*/
+
+    // config.spectrum = fft<double>(config.rx_samples, 1.92e6);
 
     /*===================================================== FRAME SYNC ==========================================================================*/
 
@@ -84,220 +75,235 @@ void rx_run(rx_cfg &config, const tx_cfg &tx_config)
 
     /*find correlation peaks*/
     findPeaks::PeakConditions conditions;
-    conditions.set_height(0.5); // min peak value (filter)
+    conditions.set_height(0.8); // min peak value (filter)
     std::vector<int> zc_peaks = findPeaks::find_peaks(config.zc_corr, conditions);
 
     if (zc_peaks.size() != 2)
       continue;
 
     /*cut signal (extract useful signal)*/
-    // const int start_idx = zc_peaks[0] + config.FFT_size;
-    // const int end_idx = zc_peaks[1] - config.CP_size;
-    // const int range = end_idx - start_idx;
+    const int start_idx = zc_peaks[0] + config.FFT_size;
+    const int end_idx = zc_peaks[1] - config.CP_size;
+    const int range = end_idx - start_idx;
 
-    // config.cut_samples.resize(range);
+    if (range % (config.FFT_size + config.CP_size) != 0 || range == 0)
+    {
+      continue;
+    }
 
-    // for (int i = start_idx; i < end_idx; ++i)
-    // {
-    //   config.cut_samples[i - start_idx] = config.rx_samples[i];
-    // }
+    config.cut_samples.resize(range);
+
+    for (int i = start_idx; i < end_idx; ++i)
+    {
+      config.cut_samples[i - start_idx] = config.rx_samples[i];
+    }
 
     /*===================================================== SYM SYNC ==========================================================================*/
 
     /*Get correlation function on CP*/
-    // config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size);
+    config.CP_corr = OFDM_corr_receiving(config.cut_samples, config.FFT_size, config.CP_size);
 
-    // config.CP_corr.insert(config.CP_corr.begin(), 1, 0);
-    // config.CP_corr.insert(config.CP_corr.end(), 1, 0);
+    config.CP_corr.insert(config.CP_corr.begin(), 1, 0);
+    config.CP_corr.insert(config.CP_corr.end(), 1, 0);
 
-    // /*find peaks*/
-    // conditions.set_height(0.35);                               // min correlation value
-    // conditions.set_distance(config.FFT_size + config.CP_size); // min distance bw peaks (ofdm symbol size)
-    // config.CP_peaks = findPeaks::find_peaks(config.CP_corr, conditions);
+    /*find peaks*/
+    conditions.set_height(0.35);                               // min correlation value
+    conditions.set_distance(config.FFT_size + config.CP_size); // min distance bw peaks (ofdm symbol size)
+    config.CP_peaks = findPeaks::find_peaks(config.CP_corr, conditions);
 
-    // if (config.CP_peaks.size() == 0)
-    // {
-    //   continue;
-    // }
+    if (config.CP_peaks.size() == 0)
+    {
+      continue;
+    }
 
-    // for (auto &el : config.CP_peaks)
-    // {
-    //   el -= 1;
-    // }
+    for (auto &el : config.CP_peaks)
+    {
+      el -= 1;
+    }
 
-    // /*delete CP*/
-    // config.ofdm_symbols = delete_CP(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size);
+    CFO_estimation(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size, config.FFT_size);
 
-    // /*time domain -> frequency domain*/
-    // batch_fft(config.ofdm_symbols, config.freq_domain, config.FFT_size);
+    /*delete CP*/
+    config.ofdm_symbols = delete_CP(config.cut_samples, config.CP_peaks, config.CP_size, config.FFT_size);
 
-    // // /*=============================================================== CHANNEL ESTIMATION ===================================================================================*/
+    /*time domain -> frequency domain*/
+    batch_fft(config.ofdm_symbols, config.freq_domain, config.FFT_size);
 
-    // /*get channel estimation with help pilots*/
-    // config.estimation = channel_estimation(config.freq_domain, config.grid, config.pilot_value);
+    // /*=============================================================== CHANNEL ESTIMATION ===================================================================================*/
 
-    // /*recovery signal*/
-    // channel_equalization(config.ofdm_symbols, config.estimation);
+    config.pilots.clear();
+    /*get channel estimation with help pilots*/
+    config.estimation = channel_estimation(config.freq_domain, config.grid, config.pilot_value, config.pilots);
 
-    // /*delete guard zeros and pilots. Extract data symbols*/
-    // config.raw_symbols = extract_inner_symbols(config.freq_domain, config.grid, 0);
+    for (int i = 0; i < config.pilots.size(); ++i)
+    {
+      std::cout << config.pilots[i] << " ";
+    }
 
-    // /*symbols -> bits*/
-    // std::vector<uint8_t> bits;
+    std::cout << "\n\n";
 
-    // config.bits.clear();
+    /*recovery signal*/
+    channel_equalization(config.ofdm_symbols, config.estimation);
 
-    // bits = BPSK_demodulator(config.raw_symbols);
+    /*delete guard zeros and pilots. Extract data symbols*/
+    config.raw_symbols = extract_inner_symbols(config.freq_domain, config.grid, 0);
 
-    // // /*decode padding*/
-    // int padding = 0;
+    /*symbols -> bits*/
+    std::vector<uint8_t> bits;
 
-    // for (int i = 0; i < config.max_padding_bits; ++i)
-    // {
-    //   padding |= bits[i] << (config.max_padding_bits - i - 1);
-    // }
+    config.bits.clear();
 
-    // if (padding > bits.size())
-    // {
-    //   continue;
-    // }
+    bits = BPSK_demodulator(config.raw_symbols);
 
-    // for (int i = 0; i < bits.size() - padding; ++i)
-    // {
-    //   config.bits.push_back(bits[i]);
-    // }
+    // /*decode padding*/
+    int padding = 0;
 
-    // // /*deshuffuling bits*/
-    // // // config.bits = deintervale(config.bits, SEED);
+    for (int i = 0; i < config.max_padding_bits; ++i)
+    {
+      padding |= bits[i] << (config.max_padding_bits - i - 1);
+    }
 
-    // // // std::cout << "RX: " << config.bits.size() << "\t" << "TX: " << tx_config.bits.size() << "\n\n";
+    if (padding > bits.size())
+    {
+      continue;
+    }
 
-    // // // for (auto el : config.bits)
-    // // //   printf("%d ", el);
+    for (int i = 0; i < bits.size() - padding; ++i)
+    {
+      config.bits.push_back(bits[i]);
+    }
 
-    // // // std::cout << "\n\n";
+    // /*deshuffuling bits*/
+    // // config.bits = deintervale(config.bits, SEED);
 
-    // // // for (auto el : tx_config.bits)
-    // // //   printf("%d ", el);
+    // // std::cout << "RX: " << config.bits.size() << "\t" << "TX: " << tx_config.bits.size() << "\n\n";
 
-    // // // std::cout << "\n\n";
+    // // for (auto el : config.bits)
+    // //   printf("%d ", el);
 
-    // config.BER = BER(config.bits, tx_config.bits);
+    // // std::cout << "\n\n";
 
-    // // /*bits -> message*/
-    // // // config.message = decoder(config.bits);
+    // // for (auto el : tx_config.bits)
+    // //   printf("%d ", el);
 
-    // // auto end = std::chrono::steady_clock::now();
+    // // std::cout << "\n\n";
 
-    // // auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+    config.BER = BER(config.bits, tx_config.bits);
 
-    // // // std::cout << "The RX time: " << elapsed_ms.count() << " ms\n";
+    // /*bits -> message*/
+    // // config.message = decoder(config.bits);
 
-    // /*=========================================== DEBUG INFO ===========================================================*/
+    // auto end = std::chrono::steady_clock::now();
 
-    // if (config.DEBUG_MODE)
-    // {
-    //   std::cout << "============================= RX SIGNAL =========================================";
+    // auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 
-    //   std::cout << "\n\nValue: ";
-    //   for (auto el : config.rx_samples)
-    //     std::cout << el << " ";
+    // // std::cout << "The RX time: " << elapsed_ms.count() << " ms\n";
 
-    //   std::cout << "\n";
+    /*=========================================== DEBUG INFO ===========================================================*/
 
-    //   std::cout << "SIZE: " << config.rx_samples.size() << " \n\n";
+    if (config.DEBUG_MODE)
+    {
+      std::cout << "============================= RX SIGNAL =========================================";
 
-    //   std::cout << "============================= FRAME SYNC =========================================";
+      std::cout << "\n\nValue: ";
+      for (auto el : config.rx_samples)
+        std::cout << el << " ";
 
-    //   std::cout << "\n\nPSS CORR FUNC VALUE: ";
-    //   for (auto el : config.zc_corr)
-    //     std::cout << el << " ";
+      std::cout << "\n";
 
-    //   std::cout << "\n";
+      std::cout << "SIZE: " << config.rx_samples.size() << " \n\n";
 
-    //   std::cout << "PSS CORR FUNC SIZE: " << config.zc_corr.size() << " \n\n";
+      std::cout << "============================= FRAME SYNC =========================================";
 
-    //   std::cout << "\n\n";
+      std::cout << "\n\nPSS CORR FUNC VALUE: ";
+      for (auto el : config.zc_corr)
+        std::cout << el << " ";
 
-    //   std::cout << "PSS PEAKS VALUE: ";
+      std::cout << "\n";
 
-    //   for (auto el : zc_peaks)
-    //     std::cout << el << " ";
+      std::cout << "PSS CORR FUNC SIZE: " << config.zc_corr.size() << " \n\n";
 
-    //   std::cout << "\n";
+      std::cout << "\n\n";
 
-    //   std::cout << "PSS PEAKS SIZE: " << zc_peaks.size() << "\n\n";
+      std::cout << "PSS PEAKS VALUE: ";
 
-    //   std::cout << "CUT SAMPLES VALUE: ";
+      for (auto el : zc_peaks)
+        std::cout << el << " ";
 
-    //   for (auto el : config.cut_samples)
-    //     std::cout << el << " ";
+      std::cout << "\n";
 
-    //   std::cout << "\n";
+      std::cout << "PSS PEAKS SIZE: " << zc_peaks.size() << "\n\n";
 
-    //   std::cout << "CUT SAMPLES SIZE: " << config.cut_samples.size() << "\n\n";
+      std::cout << "CUT SAMPLES VALUE: ";
 
-    //   std::cout << "============================= SYM SYNC =========================================";
+      for (auto el : config.cut_samples)
+        std::cout << el << " ";
 
-    //   std::cout << "\n\nCP CORR FUNC VALUE: ";
-    //   for (auto el : config.CP_corr)
-    //     std::cout << el << " ";
+      std::cout << "\n";
 
-    //   std::cout << "\n";
+      std::cout << "CUT SAMPLES SIZE: " << config.cut_samples.size() << "\n\n";
 
-    //   std::cout << "CP CORR FUNC SIZE: " << config.CP_corr.size() << " \n\n";
+      std::cout << "============================= SYM SYNC =========================================";
 
-    //   std::cout << "\n\n";
+      std::cout << "\n\nCP CORR FUNC VALUE: ";
+      for (auto el : config.CP_corr)
+        std::cout << el << " ";
 
-    //   std::cout << "CP PEAKS VALUE: ";
+      std::cout << "\n";
 
-    //   for (auto el : config.CP_peaks)
-    //     std::cout << el << " ";
+      std::cout << "CP CORR FUNC SIZE: " << config.CP_corr.size() << " \n\n";
 
-    //   std::cout << "\n";
+      std::cout << "\n\n";
 
-    //   std::cout << "CP PEAKS SIZE: " << config.CP_peaks.size() << "\n\n";
+      std::cout << "CP PEAKS VALUE: ";
 
-    //   std::cout << "SAMPLES WITHOUT CP VALUE: ";
-    //   for (auto el : config.ofdm_symbols)
-    //     std::cout << el << " ";
+      for (auto el : config.CP_peaks)
+        std::cout << el << " ";
 
-    //   std::cout << "\n";
+      std::cout << "\n";
 
-    //   std::cout << "SAMPLES WITHOUT CP SIZE: " << config.ofdm_symbols.size() << "\n\n";
+      std::cout << "CP PEAKS SIZE: " << config.CP_peaks.size() << "\n\n";
 
-    //   std::cout << "============================= FREQUENCY DOMAIN =========================================";
+      std::cout << "SAMPLES WITHOUT CP VALUE: ";
+      for (auto el : config.ofdm_symbols)
+        std::cout << el << " ";
 
-    //   std::cout << "\n\nPOST FFT SIGNAL VALUE: ";
-    //   for (auto el : config.freq_domain)
-    //     std::cout << el << " ";
+      std::cout << "\n";
 
-    //   std::cout << "\n";
+      std::cout << "SAMPLES WITHOUT CP SIZE: " << config.ofdm_symbols.size() << "\n\n";
 
-    //   std::cout << "POST FFT SIGNAL SIZE: " << config.freq_domain.size() << "\n\n";
+      std::cout << "============================= FREQUENCY DOMAIN =========================================";
 
-    //   std::cout << "\n\nINNER SYMBOLS VALUE: ";
-    //   for (auto el : config.raw_symbols)
-    //     std::cout << el << " ";
+      std::cout << "\n\nPOST FFT SIGNAL VALUE: ";
+      for (auto el : config.freq_domain)
+        std::cout << el << " ";
 
-    //   std::cout << "\n";
+      std::cout << "\n";
 
-    //   std::cout << "INNER SYMBOLS SIZE: " << config.freq_domain.size() << "\n\n";
+      std::cout << "POST FFT SIGNAL SIZE: " << config.freq_domain.size() << "\n\n";
 
-    //   std::cout << "============================= DEMODULATION =========================================";
+      std::cout << "\n\nINNER SYMBOLS VALUE: ";
+      for (auto el : config.raw_symbols)
+        std::cout << el << " ";
 
-    //   std::cout << "\n\nBITS VALUE: ";
-    //   for (auto el : config.bits)
-    //     std::cout << el << " ";
+      std::cout << "\n";
 
-    //   std::cout << "\n";
+      std::cout << "INNER SYMBOLS SIZE: " << config.freq_domain.size() << "\n\n";
 
-    //   std::cout << "BITS SIZE: " << config.bits.size() << "\n\n";
+      std::cout << "============================= DEMODULATION =========================================";
 
-    //   std::cout << "============================= BER =========================================";
+      std::cout << "\n\nBITS VALUE: ";
+      for (auto el : config.bits)
+        std::cout << el << " ";
 
-    //   std::cout << "BER VALUE: " << config.BER << "\n\n";
-    // }
+      std::cout << "\n";
+
+      std::cout << "BITS SIZE: " << config.bits.size() << "\n\n";
+
+      std::cout << "============================= BER =========================================";
+
+      std::cout << "BER VALUE: " << config.BER << "\n\n";
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

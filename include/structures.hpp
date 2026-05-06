@@ -71,12 +71,15 @@ struct rx_cfg
     std::vector<std::vector<std::complex<double>>> H; // channel matrix
     std::vector<double> t;                            // channel timeline
     std::vector<double> avg_E;                        // avg energy on rays
+    std::vector<double> pilots;
 
     int max_padding_bits; // how many bits in start of first OFDM symbol contain padding in end of last OFDM symbol
 
     double BER; // Bit Error Rate
 
     std::complex<double> pilot_value; // pilot value
+
+    std::pair<std::vector<std::complex<double>>, std::vector<double>> spectrum;
 
     std::vector<cell_type> grid;          // OFDM grid (positions of guard zeros, data, pilots)
     std::vector<std::complex<double>> zc; // Zadov-Chu sequence

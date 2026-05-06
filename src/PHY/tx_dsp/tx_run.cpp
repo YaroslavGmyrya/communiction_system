@@ -71,6 +71,9 @@ void tx_run(tx_cfg &config)
     /*add ZC*/
     config.ofdm_symbols = add_ZC(config.ofdm_symbols, config.zc);
 
+    /*FFTshift*/
+    // fft_shift_ofdm_symbols(config.ofdm_symbols, config.FFT_size);
+
     /*frequency domain -> time domain*/
     batch_ifft(config.ofdm_symbols, config.ofdm_signal, config.FFT_size,
                config.CP_size);
@@ -88,7 +91,7 @@ void tx_run(tx_cfg &config)
 
     // std::cout << "The TX time: " << elapsed_ms.count() << " ms\n";
 
-    std ::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std ::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     /*================================================= DEBUG INFO =========================================================*/
 

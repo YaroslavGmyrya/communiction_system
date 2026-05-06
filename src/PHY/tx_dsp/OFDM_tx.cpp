@@ -11,29 +11,39 @@ std::vector<cell_type> create_ofdm_grid(const int FFT_size,
                                         const int pilots_count,
                                         const int gi_size)
 {
-  // create grid and fill her by data cell
   std::vector<cell_type> grid(FFT_size, data);
 
-  // fill left/right guard
+  // --- 1. Guard bands ---
   for (int i = 0; i < gi_size; ++i)
   {
     grid[i] = guard;
-    grid[grid.size() - i - 1] = guard;
+    grid[FFT_size - 1 - i] = guard;
   }
 
-  /*
-    compute space b/w pilots. Each symbol has pilots on the sides, and in the
-    center the pilots are distributed evenly
-   */
-  double pilot_step = double(FFT_size - 2 * gi_size - 1) / (pilots_count - 1);
+  // --- 2. DC (k = 0) ---
+  grid[0] = guard; // или отдельный тип, но логически это "не используется"
 
-  int pilot_pos;
+  // --- 3. Определяем usable диапазон ---
+  int start = gi_size;              // первый после guard
+  int end = FFT_size - gi_size - 1; // последний перед правым guard
 
-  // fill pilots
+  // исключаем DC, если он попал в диапазон
+  if (start == 0)
+    start = 1;
+
+  int usable = end - start + 1;
+
+  // --- 4. Расстановка пилотов ---
   for (int i = 0; i < pilots_count; ++i)
   {
-    pilot_pos = gi_size + std::lround(i * pilot_step);
-    grid[pilot_pos] = pilot;
+    // равномерно по usable области
+    int pos = start + (i * usable) / pilots_count;
+
+    // защита от попадания в DC
+    if (pos == 0)
+      continue;
+
+    grid[pos] = pilot;
   }
 
   return grid;
@@ -168,35 +178,26 @@ void batch_ifft(std::vector<std::complex<double>> &data,
   fftw_destroy_plan(plan);
 }
 
-std::vector<std::complex<double>> ZC_gen(const int root, const int FFT_size)
+std::vector<std::complex<double>> ZC_gen(int root, int Nzc)
 {
-
-  std::vector<std::complex<double>> d_u;
-  d_u.reserve(61);
+  std::vector<std::complex<double>> d_u(Nzc);
 
   const std::complex<double> j(0, 1);
 
-  for (int n = 0; n < 61; ++n)
+  for (int n = 1; n < Nzc; ++n)
   {
-
     double nd = static_cast<double>(n);
     double ud = static_cast<double>(root);
 
-    std::complex<double> d;
-
-    if (n <= 30)
+    if (Nzc % 2 == 0)
     {
-      d = std::exp(-j * M_PI * ud * nd * (nd + 1) / 63.0);
+      d_u[n] = std::exp(-j * M_PI * ud * nd * nd / static_cast<double>(Nzc));
     }
     else
     {
-      d = std::exp(-j * M_PI * ud * (nd + 1) * (nd + 2) / 63.0);
+      d_u[n] = std::exp(-j * M_PI * ud * nd * (nd + 1) / static_cast<double>(Nzc));
     }
-
-    d_u.push_back(d);
   }
-
-  d_u.resize(FFT_size);
 
   return d_u;
 }
@@ -211,4 +212,18 @@ std::vector<std::complex<double>> add_ZC(const std::vector<std::complex<double>>
   result.insert(result.end(), ZC.begin(), ZC.end());
 
   return result;
+}
+
+void fft_shift_ofdm_symbols(std::vector<std::complex<double>> &samples, int FFT_size)
+{
+  int ofdm_symbols = samples.size() / FFT_size;
+
+  for (int i = 0; i < ofdm_symbols; ++i)
+  {
+    auto start = samples.begin() + i * FFT_size;
+    auto mid = start + FFT_size / 2;
+    auto end = start + FFT_size;
+
+    std::rotate(start, mid, end);
+  }
 }

@@ -101,7 +101,8 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
   float left_width = 450.0f;
   float plot_height = 250.0f;
   bool running = true;
-  int profile = -1;
+  int profile = 0;
+  std::vector<double> pilots_x;
 
   while (running)
   {
@@ -275,6 +276,15 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
           if (ImGui::BeginChild("RX_Plots", ImVec2(0, 0), true))
           {
 
+            if (ImPlot::BeginPlot("Spectrum", ImVec2(-1, plot_height)))
+            {
+              ImPlot::SetupAxes("frequency", "Amplitude");
+              ImPlot::PlotLineG("I component", get_amp_spec,
+                                &rx_config.spectrum.first,
+                                rx_config.spectrum.first.size());
+              ImPlot::EndPlot();
+            }
+
             if (ImPlot::BeginPlot("RX SIGNAL", ImVec2(-1, plot_height)))
             {
               ImPlot::SetupAxes("time, s", "Amplitude");
@@ -311,18 +321,30 @@ void run_gui(tx_cfg &tx_config, rx_cfg &rx_config)
             if (ImPlot::BeginPlot("CHANNEL PROFILE",
                                   ImVec2(-1, plot_height)))
             {
+              ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
               ImPlot::SetupAxes("delay, s", "E");
               ImPlot::PlotStems("E", rx_config.t.data(), rx_config.avg_E.data(), rx_config.t.size());
+              ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 5);
+              ImPlot::PlotScatter("points", rx_config.t.data(), rx_config.avg_E.data(), rx_config.t.size());
               ImPlot::EndPlot();
             }
 
             if (ImPlot::BeginPlot("CHANNEL ESTIMATION",
                                   ImVec2(-1, plot_height)))
             {
+
+              for (int i = 0; i < rx_config.pilots.size(); ++i)
+              {
+                pilots_x.push_back(i);
+              }
+
               ImPlot::SetupAxes("Time", "ESTIMATION");
               ImPlot::PlotLineG("ESTIMATION", get_abs<double>,
                                 &rx_config.estimation,
                                 rx_config.estimation.size());
+              ImPlot::PlotStems("E", pilots_x.data(), rx_config.pilots.data(), rx_config.pilots.size());
+              ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 5);
+              ImPlot::PlotScatter("points", pilots_x.data(), rx_config.pilots.data(), rx_config.pilots.size());
               ImPlot::EndPlot();
             }
 

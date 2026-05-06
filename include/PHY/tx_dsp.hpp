@@ -205,3 +205,5 @@ std::vector<std::complex<double>> add_ZC(const std::vector<std::complex<double>>
  * @param[in,out] config Shared TX configuration.
  */
 void tx_run(tx_cfg &config);
+
+void fft_shift_ofdm_symbols(std::vector<std::complex<double>> &samples, int FFT_size);
